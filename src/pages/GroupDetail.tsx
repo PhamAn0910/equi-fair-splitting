@@ -135,6 +135,7 @@ export default function GroupDetail() {
           </Button>
           <Button 
             variant="secondary"
+            onClick={() => navigate('/settle')}
             className="h-auto py-4 flex-col gap-2"
           >
             <Users className="w-5 h-5" />
