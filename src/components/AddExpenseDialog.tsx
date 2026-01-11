@@ -153,11 +153,67 @@ export function AddExpenseDialog({ open, onOpenChange, group, onSuccess }: AddEx
     setIncludedMembers(newIncluded);
   };
 
-  const updateSplitValue = (memberId: string, value: number) => {
-    setSplitValues(prev => ({
-      ...prev,
-      [memberId]: Math.max(0, value),
-    }));
+  const updateSplitValue = (memberId: string, value: number, autoBalance = false) => {
+    const newValue = Math.max(0, value);
+    
+    if (autoBalance && includedMembers.size > 1) {
+      const includedMemberIds = Array.from(includedMembers);
+      const otherMembers = includedMemberIds.filter(id => id !== memberId);
+      
+      if (splitMethod === 'percentage') {
+        // Auto-balance percentages to sum to 100%
+        const remaining = 100 - newValue;
+        const othersTotalCurrent = otherMembers.reduce((sum, id) => sum + (splitValues[id] || 0), 0);
+        
+        setSplitValues(prev => {
+          const updated = { ...prev, [memberId]: newValue };
+          
+          if (othersTotalCurrent > 0) {
+            // Distribute proportionally
+            otherMembers.forEach(id => {
+              const proportion = (prev[id] || 0) / othersTotalCurrent;
+              updated[id] = Math.max(0, Math.round(remaining * proportion * 100) / 100);
+            });
+          } else if (otherMembers.length > 0) {
+            // Equal distribution if all others are 0
+            const perMember = remaining / otherMembers.length;
+            otherMembers.forEach(id => {
+              updated[id] = Math.round(perMember * 100) / 100;
+            });
+          }
+          
+          return updated;
+        });
+      } else if (splitMethod === 'amounts') {
+        // Auto-balance amounts to sum to total
+        const remaining = numericAmount - newValue;
+        const othersTotalCurrent = otherMembers.reduce((sum, id) => sum + (splitValues[id] || 0), 0);
+        
+        setSplitValues(prev => {
+          const updated = { ...prev, [memberId]: newValue };
+          
+          if (othersTotalCurrent > 0) {
+            // Distribute proportionally
+            otherMembers.forEach(id => {
+              const proportion = (prev[id] || 0) / othersTotalCurrent;
+              updated[id] = Math.max(0, Math.round(remaining * proportion * 100) / 100);
+            });
+          } else if (otherMembers.length > 0) {
+            // Equal distribution if all others are 0
+            const perMember = remaining / otherMembers.length;
+            otherMembers.forEach(id => {
+              updated[id] = Math.round(perMember * 100) / 100;
+            });
+          }
+          
+          return updated;
+        });
+      } else {
+        setSplitValues(prev => ({ ...prev, [memberId]: newValue }));
+      }
+    } else {
+      setSplitValues(prev => ({ ...prev, [memberId]: newValue }));
+    }
   };
 
   const handleMethodChange = (method: SplitMethod) => {
@@ -165,11 +221,13 @@ export function AddExpenseDialog({ open, onOpenChange, group, onSuccess }: AddEx
     
     // Reset values based on new method
     const newValues: Record<string, number> = {};
+    const includedCount = includedMembers.size || 1;
     group.members.forEach(m => {
       if (includedMembers.has(m.id)) {
         newValues[m.id] = method === 'equal' ? 1 :
                          method === 'shares' ? 1 :
-                         method === 'percentage' ? 100 / includedMembers.size :
+                         method === 'percentage' ? Math.round(100 / includedCount) :
+                         method === 'amounts' ? Math.round((numericAmount / includedCount) * 100) / 100 :
                          0;
       }
     });
@@ -275,13 +333,9 @@ export function AddExpenseDialog({ open, onOpenChange, group, onSuccess }: AddEx
             <div className="grid grid-cols-4 gap-1 sm:gap-2">
               {(['equal', 'shares', 'percentage', 'amounts'] as SplitMethod[]).map((method) => {
                 const getLabel = () => {
-                  if (method === 'percentage') return <span className="sm:hidden">%</span>;
-                  if (method === 'amounts') return 'Amt';
+                  if (method === 'percentage') return '%';
+                  if (method === 'amounts') return 'Amount';
                   return method;
-                };
-                const getFullLabel = () => {
-                  if (method === 'percentage') return <span className="hidden sm:inline">Percentage</span>;
-                  return null;
                 };
                 return (
                   <button
@@ -296,7 +350,6 @@ export function AddExpenseDialog({ open, onOpenChange, group, onSuccess }: AddEx
                     )}
                   >
                     {getLabel()}
-                    {getFullLabel()}
                   </button>
                 );
               })}
@@ -372,24 +425,41 @@ export function AddExpenseDialog({ open, onOpenChange, group, onSuccess }: AddEx
                         
                         {splitMethod === 'percentage' && (
                           <div className="flex items-center gap-0.5 sm:gap-1">
-                            <Input
-                              type="number"
-                              value={currentValue}
-                              onChange={(e) => updateSplitValue(member.id, parseFloat(e.target.value) || 0)}
-                              className="w-12 sm:w-16 h-7 sm:h-8 text-center text-xs sm:text-sm"
-                            />
-                            <span className="text-xs sm:text-sm text-muted-foreground">%</span>
+                            <button
+                              type="button"
+                              onClick={() => updateSplitValue(member.id, currentValue - 1, true)}
+                              className="p-1 rounded-full hover:bg-muted"
+                            >
+                              <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
+                            </button>
+                            <span className="w-8 sm:w-10 text-center font-medium text-sm">{Math.round(currentValue)}%</span>
+                            <button
+                              type="button"
+                              onClick={() => updateSplitValue(member.id, currentValue + 1, true)}
+                              className="p-1 rounded-full hover:bg-muted"
+                            >
+                              <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                            </button>
                           </div>
                         )}
                         
                         {splitMethod === 'amounts' && (
                           <div className="flex items-center gap-0.5 sm:gap-1">
-                            <Input
-                              type="number"
-                              value={currentValue}
-                              onChange={(e) => updateSplitValue(member.id, parseFloat(e.target.value) || 0)}
-                              className="w-16 sm:w-20 h-7 sm:h-8 text-right text-xs sm:text-sm"
-                            />
+                            <button
+                              type="button"
+                              onClick={() => updateSplitValue(member.id, currentValue - 1, true)}
+                              className="p-1 rounded-full hover:bg-muted"
+                            >
+                              <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
+                            </button>
+                            <span className="w-10 sm:w-12 text-center font-medium text-sm">{currentValue.toFixed(2)}</span>
+                            <button
+                              type="button"
+                              onClick={() => updateSplitValue(member.id, currentValue + 1, true)}
+                              className="p-1 rounded-full hover:bg-muted"
+                            >
+                              <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                            </button>
                           </div>
                         )}
                       </div>
