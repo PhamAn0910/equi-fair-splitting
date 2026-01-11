@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import type { ExpenseItem, ExpenseFees } from '@/stores/paintStore';
 
-export interface ParsedItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
+export interface ParsedReceiptData {
+  items: ExpenseItem[];
+  fees: ExpenseFees;
+  subtotal: number;
 }
 
 interface UseReceiptOCRResult {
-  parseReceipt: (file: File) => Promise<ParsedItem[]>;
+  parseReceipt: (file: File) => Promise<ParsedReceiptData>;
   isLoading: boolean;
   error: string | null;
 }
@@ -19,9 +19,15 @@ export function useReceiptOCR(): UseReceiptOCRResult {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const parseReceipt = async (file: File): Promise<ParsedItem[]> => {
+  const parseReceipt = async (file: File): Promise<ParsedReceiptData> => {
     setIsLoading(true);
     setError(null);
+
+    const emptyResult: ParsedReceiptData = {
+      items: [],
+      fees: { tax: 0, tip: 0, service_charge: 0, discount: 0 },
+      subtotal: 0
+    };
 
     try {
       // Convert file to base64
@@ -47,31 +53,43 @@ export function useReceiptOCR(): UseReceiptOCRResult {
         throw new Error(data.error);
       }
 
-      const items = data?.items || [];
+      const rawItems = data?.items || [];
       
       // Add unique IDs to each item
-      const parsedItems: ParsedItem[] = items.map((item: any, index: number) => ({
+      const items: ExpenseItem[] = rawItems.map((item: any, index: number) => ({
         id: `item-${Date.now()}-${index}`,
         name: item.name || 'Unknown Item',
         price: typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0,
         quantity: typeof item.quantity === 'number' ? item.quantity : parseInt(item.quantity) || 1,
       }));
 
-      console.log('Parsed items:', parsedItems);
+      // Extract fees
+      const fees: ExpenseFees = {
+        tax: data?.fees?.tax || 0,
+        tip: data?.fees?.tip || 0,
+        service_charge: data?.fees?.service_charge || 0,
+        discount: data?.fees?.discount || 0,
+      };
+
+      const subtotal = data?.subtotal || items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+      console.log('Parsed receipt data:', { items, fees, subtotal });
       
-      if (parsedItems.length === 0) {
+      if (items.length === 0) {
         toast.warning('No items found in receipt. Try a clearer image.');
       } else {
-        toast.success(`Found ${parsedItems.length} items`);
+        const feesTotal = fees.tax + fees.tip + fees.service_charge;
+        const feesMsg = feesTotal > 0 ? ` + fees detected` : '';
+        toast.success(`Found ${items.length} items${feesMsg}`);
       }
 
-      return parsedItems;
+      return { items, fees, subtotal };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to parse receipt';
       setError(message);
       toast.error(message);
       console.error('Receipt OCR error:', err);
-      return [];
+      return emptyResult;
     } finally {
       setIsLoading(false);
     }
