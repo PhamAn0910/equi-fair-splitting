@@ -452,15 +452,15 @@ export function AddExpenseDialog({ open, onOpenChange, group, onSuccess }: AddEx
                             >
                               <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
                             </button>
-                            <div className="relative">
+                            <div className="flex items-center gap-0.5 sm:gap-1">
                               <input
                                 type="number"
                                 inputMode="numeric"
                                 value={Math.round(currentValue)}
                                 onChange={(e) => updateSplitValue(member.id, parseFloat(e.target.value) || 0, true)}
-                                className="w-10 sm:w-12 text-center font-medium text-sm bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                className="w-7 sm:w-10 text-center font-medium text-sm bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               />
-                              <span className="absolute right-0 top-1/2 -translate-y-1/2 text-sm font-medium pointer-events-none">%</span>
+                              <span className="text-xs sm:text-sm font-medium text-muted-foreground">%</span>
                             </div>
                             <button
                               type="button"
