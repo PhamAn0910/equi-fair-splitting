@@ -6,6 +6,7 @@ import { useGroupStore } from '@/stores/groupStore';
 import { useExpenseStore } from '@/stores/expenseStore';
 import { MemberAvatar } from '@/components/MemberAvatar';
 import { ExpenseItemRow } from '@/components/ExpenseItemRow';
+import { ScanConfirmDialog } from '@/components/ScanConfirmDialog';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/constants';
 import { useReceiptOCR } from '@/hooks/useReceiptOCR';
@@ -36,6 +37,7 @@ export default function ScanPaint() {
 
   const { parseReceipt, isLoading: isScanning } = useReceiptOCR();
   const [hasScanned, setHasScanned] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -92,6 +94,11 @@ export default function ScanPaint() {
 
   const handleConfirmSplit = () => {
     if (!activeGroup || unassignedTotal > 0) return;
+    setShowConfirmDialog(true);
+  };
+
+  const handleFinalConfirm = (data: { payerId: string; description: string; category: string }) => {
+    if (!activeGroup) return;
 
     // Create splits from member breakdown (includes proportional fees)
     const splits = members
@@ -105,15 +112,12 @@ export default function ScanPaint() {
       })
       .filter(split => split.value > 0);
 
-    // Find first member (assume they paid, or use first admin)
-    const payer = members.find(m => m.isAdmin) || members[0];
-
     addExpense({
       groupId: activeGroup.id,
-      description: 'Scanned Receipt',
+      description: data.description,
       totalAmount: billTotal,
       currency: activeGroup.currency,
-      payerId: payer?.id || '',
+      payerId: data.payerId,
       date: new Date().toISOString(),
       splitMethod: 'amounts',
       splits,
@@ -123,13 +127,25 @@ export default function ScanPaint() {
         price: i.price,
         quantity: i.quantity,
       })),
-      category: 'food',
+      category: data.category as 'food' | 'transport' | 'drinks' | 'shopping' | 'entertainment' | 'accommodation' | 'other',
     });
 
     toast.success('Expense added to group!');
+    setShowConfirmDialog(false);
     reset();
     navigate(`/group/${activeGroup.id}`);
   };
+
+  // Get member breakdowns for dialog
+  const memberBreakdowns = members.map(member => {
+    const breakdown = getMemberBreakdown(member.id);
+    return {
+      memberId: member.id,
+      name: member.name,
+      colorHex: member.colorHex,
+      grandTotal: breakdown.grandTotal,
+    };
+  });
 
   const billTotal = getBillTotal();
   const itemsSubtotal = getItemsSubtotal();
@@ -188,7 +204,7 @@ export default function ScanPaint() {
       <div className="px-4 py-3 border-b border-border bg-card">
         <div className="flex items-center justify-between mb-2">
           <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-            Tap to paint →
+            Select a person, then tap items below
           </p>
         </div>
         <div className="flex items-center gap-3 overflow-x-auto pb-1">
@@ -395,6 +411,17 @@ export default function ScanPaint() {
           </Button>
         </footer>
       )}
+
+      {/* Confirm Dialog */}
+      <ScanConfirmDialog
+        open={showConfirmDialog}
+        onOpenChange={setShowConfirmDialog}
+        members={members}
+        totalAmount={billTotal}
+        currency={activeGroup.currency}
+        memberBreakdowns={memberBreakdowns}
+        onConfirm={handleFinalConfirm}
+      />
     </div>
   );
 }

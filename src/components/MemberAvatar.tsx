@@ -28,21 +28,23 @@ export function MemberAvatar({
   className,
 }: MemberAvatarProps) {
   return (
-      <div className={cn('flex flex-col items-center gap-1 flex-shrink-0', className)}>
+    <div className={cn('flex flex-col items-center gap-1 flex-shrink-0', className)}>
+      <div className={cn('p-1', isActive && 'p-0.5')}>
         <button
-        type="button"
-        onClick={onClick}
-        className={cn(
-          'rounded-full flex items-center justify-center font-semibold text-white transition-all duration-200',
-          sizeClasses[size],
-          onClick && 'cursor-pointer hover:scale-105 active:scale-95',
-          isActive && 'ring-2 ring-offset-2 ring-offset-background ring-primary'
-        )}
-        style={{ backgroundColor: colorHex }}
-        disabled={!onClick}
-      >
-        {getInitials(name)}
-      </button>
+          type="button"
+          onClick={onClick}
+          className={cn(
+            'rounded-full flex items-center justify-center font-semibold text-white transition-all duration-200',
+            sizeClasses[size],
+            onClick && 'cursor-pointer hover:scale-105 active:scale-95',
+            isActive && 'ring-2 ring-primary'
+          )}
+          style={{ backgroundColor: colorHex }}
+          disabled={!onClick}
+        >
+          {getInitials(name)}
+        </button>
+      </div>
       {showName && (
         <span className={cn(
           'text-xs font-medium truncate max-w-[60px]',
