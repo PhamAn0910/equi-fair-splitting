@@ -18,12 +18,11 @@ export function getNextColor(usedColors: string[]): MemberColor {
   return available || MEMBER_COLORS[usedColors.length % MEMBER_COLORS.length];
 }
 
-// Currency formatter
-export function formatCurrency(amount: number, currency = 'EUR'): string {
-  return new Intl.NumberFormat('en-EU', {
-    style: 'currency',
-    currency,
+// Currency formatter - no currency symbol for now
+export function formatCurrency(amount: number, _currency = 'EUR'): string {
+  return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(amount);
 }
 

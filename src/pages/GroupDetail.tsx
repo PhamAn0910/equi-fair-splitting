@@ -73,7 +73,7 @@ export default function GroupDetail() {
 
         <h1 className="text-2xl font-bold mb-1">{group.name}</h1>
         <p className="text-primary-foreground/70 mb-6">
-          {group.members.length} members • {group.currency}
+          {group.members.length} members
         </p>
 
         {/* Member Row */}
