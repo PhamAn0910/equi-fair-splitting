@@ -112,12 +112,12 @@ function distributeProportionally(
   const result: Record<string, number> = {};
   let distributed = 0;
 
-  // Calculate raw amounts and round down
+  // Calculate amounts using correct formula: multiply first, then divide, then round
   const rawAmounts = shares.map(s => ({
     id: s.id,
     weight: s.weight,
-    raw: total * (s.weight / totalWeight),
-    rounded: Math.floor(total * (s.weight / totalWeight) * 100) / 100
+    // ✅ CORRECT: (total * weight / totalWeight) avoids floating-point precision issues
+    rounded: Math.round((total * s.weight / totalWeight) * 100) / 100
   }));
 
   // Sum up rounded amounts
