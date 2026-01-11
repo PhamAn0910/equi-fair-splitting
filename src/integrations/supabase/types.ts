@@ -14,7 +14,187 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      expense_items: {
+        Row: {
+          created_at: string | null
+          expense_id: string
+          id: string
+          name: string
+          price: number
+          quantity: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          expense_id: string
+          id?: string
+          name: string
+          price: number
+          quantity?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          expense_id?: string
+          id?: string
+          name?: string
+          price?: number
+          quantity?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_items_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          created_at: string | null
+          date: string | null
+          description: string | null
+          group_id: string
+          id: string
+          payer_member_id: string | null
+          receipt_image_url: string | null
+          total_amount: number
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string | null
+          description?: string | null
+          group_id: string
+          id?: string
+          payer_member_id?: string | null
+          receipt_image_url?: string | null
+          total_amount?: number
+        }
+        Update: {
+          created_at?: string | null
+          date?: string | null
+          description?: string | null
+          group_id?: string
+          id?: string
+          payer_member_id?: string | null
+          receipt_image_url?: string | null
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_payer_member_id_fkey"
+            columns: ["payer_member_id"]
+            isOneToOne: false
+            referencedRelation: "group_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_members: {
+        Row: {
+          avatar_color: string
+          created_at: string | null
+          group_id: string
+          id: string
+          is_admin: boolean | null
+          name: string
+        }
+        Insert: {
+          avatar_color: string
+          created_at?: string | null
+          group_id: string
+          id?: string
+          is_admin?: boolean | null
+          name: string
+        }
+        Update: {
+          avatar_color?: string
+          created_at?: string | null
+          group_id?: string
+          id?: string
+          is_admin?: boolean | null
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      groups: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          currency: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          currency?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          currency?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      item_assignments: {
+        Row: {
+          created_at: string | null
+          id: string
+          item_id: string
+          member_id: string
+          share_fraction: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          item_id: string
+          member_id: string
+          share_fraction?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          item_id?: string
+          member_id?: string
+          share_fraction?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_assignments_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "expense_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_assignments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "group_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

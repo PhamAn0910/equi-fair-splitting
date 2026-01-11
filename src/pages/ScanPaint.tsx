@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, MoreVertical, Plus, Check, Camera, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { usePaintStore, type ExpenseItem } from '@/stores/paintStore';
 import { useGroupStore } from '@/stores/groupStore';
+import { useExpenseStore, calculateSplits } from '@/stores/expenseStore';
 import { MemberAvatar } from '@/components/MemberAvatar';
 import { ExpenseItemRow } from '@/components/ExpenseItemRow';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/constants';
 import { useReceiptOCR } from '@/hooks/useReceiptOCR';
+import { toast } from 'sonner';
 
 export default function ScanPaint() {
   const navigate = useNavigate();
@@ -87,6 +89,56 @@ export default function ScanPaint() {
   const handleItemTap = (itemId: string) => {
     if (!activeMemberId) return;
     toggleAssignment(itemId, activeMemberId);
+  };
+
+  const { addExpense } = useExpenseStore();
+
+  const handleConfirmSplit = () => {
+    if (!activeGroup || unassignedTotal > 0) return;
+
+    // Create splits from item assignments
+    const memberTotals: Record<string, number> = {};
+    
+    for (const item of items) {
+      const assigneeIds = assignments[item.id] || [];
+      if (assigneeIds.length > 0) {
+        const perPersonAmount = (item.price * item.quantity) / assigneeIds.length;
+        for (const memberId of assigneeIds) {
+          memberTotals[memberId] = (memberTotals[memberId] || 0) + perPersonAmount;
+        }
+      }
+    }
+
+    const splits = Object.entries(memberTotals).map(([memberId, amount]) => ({
+      memberId,
+      value: amount,
+      calculatedAmount: amount,
+    }));
+
+    // Find first member (assume they paid, or use first admin)
+    const payer = members.find(m => m.isAdmin) || members[0];
+
+    addExpense({
+      groupId: activeGroup.id,
+      description: 'Scanned Receipt',
+      totalAmount: billTotal,
+      currency: activeGroup.currency,
+      payerId: payer?.id || '',
+      date: new Date().toISOString(),
+      splitMethod: 'amounts',
+      splits,
+      items: items.map(i => ({
+        id: i.id,
+        name: i.name,
+        price: i.price,
+        quantity: i.quantity,
+      })),
+      category: 'food',
+    });
+
+    toast.success('Expense added to group!');
+    reset();
+    navigate(`/group/${activeGroup.id}`);
   };
 
   const billTotal = getBillTotal();
@@ -281,6 +333,7 @@ export default function ScanPaint() {
             className="w-full gap-2"
             size="lg"
             disabled={unassignedTotal > 0}
+            onClick={handleConfirmSplit}
           >
             {unassignedTotal > 0 ? (
               `Assign remaining ${formatCurrency(unassignedTotal, activeGroup.currency)}`
