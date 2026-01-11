@@ -1,23 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, MoreVertical, Plus, Check, Camera, Image as ImageIcon } from 'lucide-react';
-import { usePaintStore, type ExpenseItem, type Member } from '@/stores/paintStore';
+import { ArrowLeft, MoreVertical, Plus, Check, Camera, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { usePaintStore, type ExpenseItem } from '@/stores/paintStore';
 import { useGroupStore } from '@/stores/groupStore';
 import { MemberAvatar } from '@/components/MemberAvatar';
 import { ExpenseItemRow } from '@/components/ExpenseItemRow';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/constants';
-import { cn } from '@/lib/utils';
-
-// Mock parsed receipt items for demo
-const mockItems: ExpenseItem[] = [
-  { id: '1', name: 'Spicy Tuna Roll', price: 12.50, quantity: 1 },
-  { id: '2', name: 'Miso Soup', price: 4.00, quantity: 1 },
-  { id: '3', name: 'Sashimi Platter L', price: 32.00, quantity: 1 },
-  { id: '4', name: 'Edamame', price: 6.00, quantity: 1 },
-  { id: '5', name: 'Green Tea', price: 3.50, quantity: 2 },
-  { id: '6', name: 'Sake Bottle', price: 15.00, quantity: 1 },
-];
+import { useReceiptOCR } from '@/hooks/useReceiptOCR';
 
 export default function ScanPaint() {
   const navigate = useNavigate();
@@ -39,8 +29,11 @@ export default function ScanPaint() {
     reset,
   } = usePaintStore();
 
-  const [isScanning, setIsScanning] = useState(false);
+  const { parseReceipt, isLoading: isScanning } = useReceiptOCR();
   const [hasScanned, setHasScanned] = useState(false);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   // Initialize with group members
   useEffect(() => {
@@ -62,14 +55,33 @@ export default function ScanPaint() {
     }
   }, [activeGroup]);
 
-  const handleScan = () => {
-    setIsScanning(true);
-    // Simulate OCR processing
-    setTimeout(() => {
-      setItems(mockItems);
-      setIsScanning(false);
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const parsedItems = await parseReceipt(file);
+    
+    if (parsedItems.length > 0) {
+      const expenseItems: ExpenseItem[] = parsedItems.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+      }));
+      setItems(expenseItems);
       setHasScanned(true);
-    }, 1500);
+    }
+    
+    // Reset file input
+    event.target.value = '';
+  };
+
+  const handleTakePhoto = () => {
+    cameraInputRef.current?.click();
+  };
+
+  const handleSelectFromGallery = () => {
+    fileInputRef.current?.click();
   };
 
   const handleItemTap = (itemId: string) => {
@@ -93,6 +105,23 @@ export default function ScanPaint() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Hidden file inputs */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
       {/* Header */}
       <header className="flex items-center justify-between p-4 border-b border-border safe-top">
         <button
@@ -103,7 +132,7 @@ export default function ScanPaint() {
         </button>
         <div className="text-center">
           <h1 className="font-semibold text-foreground">{activeGroup.name}</h1>
-          <p className="text-xs text-muted-foreground">Receipt #2049</p>
+          <p className="text-xs text-muted-foreground">Scan Receipt</p>
         </div>
         <button className="p-2 -mr-2 rounded-lg hover:bg-muted transition-colors">
           <MoreVertical className="w-5 h-5" />
@@ -142,8 +171,8 @@ export default function ScanPaint() {
           <div className="h-full flex flex-col items-center justify-center gap-4">
             {isScanning ? (
               <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4 animate-pulse">
-                  <Camera className="w-8 h-8 text-primary" />
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
                 </div>
                 <p className="font-medium text-foreground">Scanning receipt...</p>
                 <p className="text-sm text-muted-foreground">Extracting items with AI</p>
@@ -152,14 +181,14 @@ export default function ScanPaint() {
               <>
                 <div className="grid grid-cols-2 gap-4 w-full max-w-xs">
                   <button
-                    onClick={handleScan}
+                    onClick={handleTakePhoto}
                     className="aspect-square rounded-2xl bg-primary flex flex-col items-center justify-center gap-2 text-primary-foreground hover:opacity-90 transition-opacity"
                   >
                     <Camera className="w-8 h-8" />
                     <span className="text-sm font-medium">Take Photo</span>
                   </button>
                   <button
-                    onClick={handleScan}
+                    onClick={handleSelectFromGallery}
                     className="aspect-square rounded-2xl bg-muted flex flex-col items-center justify-center gap-2 text-foreground hover:bg-muted/80 transition-colors"
                   >
                     <ImageIcon className="w-8 h-8" />
@@ -167,7 +196,7 @@ export default function ScanPaint() {
                   </button>
                 </div>
                 <p className="text-sm text-muted-foreground text-center">
-                  Scan a receipt or add items manually
+                  Scan a receipt to extract items automatically
                 </p>
               </>
             )}
@@ -175,9 +204,21 @@ export default function ScanPaint() {
         ) : (
           /* Item List */
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground mb-3">
-              TODAY, 8:45 PM
-            </p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm text-muted-foreground">
+                {items.length} items found
+              </p>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => {
+                  setHasScanned(false);
+                  setItems([]);
+                }}
+              >
+                Scan Again
+              </Button>
+            </div>
             {items.map((item) => {
               const assignees = getItemAssignees(item.id);
               return (
