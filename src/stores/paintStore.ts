@@ -100,7 +100,8 @@ const initialState = {
 
 /**
  * Distributes an amount proportionally with proper rounding.
- * Assigns rounding remainder to the largest share holder.
+ * Uses Math.round for natural-looking amounts and assigns
+ * any rounding remainder to the largest share holder.
  */
 function distributeProportionally(
   total: number,
@@ -112,12 +113,11 @@ function distributeProportionally(
   const result: Record<string, number> = {};
   let distributed = 0;
 
-  // Calculate raw amounts and round down
+  // Calculate amounts using correct formula: multiply first, then divide, then round
   const rawAmounts = shares.map(s => ({
     id: s.id,
     weight: s.weight,
-    raw: total * (s.weight / totalWeight),
-    rounded: Math.floor(total * (s.weight / totalWeight) * 100) / 100
+    rounded: Math.round((total * s.weight / totalWeight) * 100) / 100
   }));
 
   // Sum up rounded amounts
@@ -126,15 +126,16 @@ function distributeProportionally(
     distributed += item.rounded;
   }
 
-  // Calculate remainder (due to rounding)
+  // Fix any remaining penny from rounding (assign to largest shareholder)
   const remainder = Math.round((total - distributed) * 100) / 100;
 
-  // Assign remainder to the person with the largest share
   if (remainder !== 0 && rawAmounts.length > 0) {
     const largestShareHolder = rawAmounts.reduce((max, item) => 
       item.weight > max.weight ? item : max
     );
-    result[largestShareHolder.id] = Math.round((result[largestShareHolder.id] + remainder) * 100) / 100;
+    result[largestShareHolder.id] = Math.round(
+      (result[largestShareHolder.id] + remainder) * 100
+    ) / 100;
   }
 
   return result;
