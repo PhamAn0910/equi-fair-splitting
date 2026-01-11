@@ -220,7 +220,6 @@ export default function Settlement() {
           <SettlementGraph
             nodes={graphNodes}
             edges={graphEdges}
-            currency={currencySymbol}
           />
         )}
         

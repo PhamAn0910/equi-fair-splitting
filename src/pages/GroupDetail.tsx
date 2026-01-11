@@ -159,14 +159,19 @@ export default function GroupDetail() {
               {expenses.slice(0, 5).map((expense) => {
                 const payer = group.members.find(m => m.id === expense.payerId);
                 return (
-                  <ActivityItem
+                  <div
                     key={expense.id}
-                    description={expense.description}
-                    paidBy={payer?.name || 'Unknown'}
-                    date={formatExpenseDate(expense.date)}
-                    amount={expense.totalAmount}
-                    category={expense.category}
-                  />
+                    onClick={() => navigate(`/bill/${expense.id}`)}
+                    className="cursor-pointer hover:bg-muted/50 rounded-xl transition-colors"
+                  >
+                    <ActivityItem
+                      description={expense.description}
+                      paidBy={payer?.name || 'Unknown'}
+                      date={formatExpenseDate(expense.date)}
+                      amount={expense.totalAmount}
+                      category={expense.category}
+                    />
+                  </div>
                 );
               })}
             </div>
