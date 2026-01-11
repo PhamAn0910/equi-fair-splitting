@@ -1,12 +1,14 @@
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/constants';
-import { Receipt, Utensils, Car, Coffee, ShoppingBag } from 'lucide-react';
+import { Receipt, Utensils, Car, Coffee, ShoppingBag, Film, Hotel } from 'lucide-react';
 
 const categoryIcons = {
   food: Utensils,
   transport: Car,
   drinks: Coffee,
   shopping: ShoppingBag,
+  entertainment: Film,
+  accommodation: Hotel,
   other: Receipt,
 };
 

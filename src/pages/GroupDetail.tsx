@@ -1,15 +1,23 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MoreVertical, ScanLine, Plus, Users } from 'lucide-react';
+import { ArrowLeft, MoreVertical, ScanLine, Plus, Users, Receipt, UserPlus } from 'lucide-react';
 import { useGroupStore } from '@/stores/groupStore';
+import { useExpenseStore } from '@/stores/expenseStore';
 import { MemberAvatar } from '@/components/MemberAvatar';
 import { ActivityItem } from '@/components/ActivityItem';
 import { Button } from '@/components/ui/button';
+import { AddExpenseDialog } from '@/components/AddExpenseDialog';
+import { AddMemberDialog } from '@/components/AddMemberDialog';
 import { formatCurrency } from '@/lib/constants';
 
 export default function GroupDetail() {
   const { groupId } = useParams();
   const navigate = useNavigate();
   const { groups, setActiveGroup } = useGroupStore();
+  const { getExpensesByGroup, getGroupBalances, getGroupTotalSpend } = useExpenseStore();
+
+  const [showAddExpense, setShowAddExpense] = useState(false);
+  const [showAddMember, setShowAddMember] = useState(false);
 
   const group = groups.find(g => g.id === groupId);
 
@@ -27,12 +35,25 @@ export default function GroupDetail() {
     navigate('/scan');
   };
 
-  // Mock expenses
-  const expenses = [
-    { description: 'Sushi Zen Restaurant', paidBy: 'Alex', date: 'Today', amount: 73.00, category: 'food' as const },
-    { description: 'Uber to Temple', paidBy: 'Sarah', date: 'Yesterday', amount: 12.50, isOwed: false, category: 'transport' as const },
-    { description: 'Street Food Tour', paidBy: 'You', date: '2 days ago', amount: 35.00, isOwed: false, category: 'food' as const },
-  ];
+  const expenses = getExpensesByGroup(group.id);
+  const balances = getGroupBalances(group.id);
+  const totalSpend = getGroupTotalSpend(group.id);
+
+  // Get admin balance (You)
+  const admin = group.members.find(m => m.isAdmin);
+  const yourBalance = admin ? balances[admin.id] || 0 : 0;
+
+  // Format date for display
+  const formatExpenseDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString();
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -66,7 +87,10 @@ export default function GroupDetail() {
               showName
             />
           ))}
-          <button className="flex-shrink-0 w-12 h-12 rounded-full border-2 border-dashed border-primary-foreground/30 flex items-center justify-center text-primary-foreground/50 hover:border-primary-foreground hover:text-primary-foreground transition-colors">
+          <button 
+            onClick={() => setShowAddMember(true)}
+            className="flex-shrink-0 w-12 h-12 rounded-full border-2 border-dashed border-primary-foreground/30 flex items-center justify-center text-primary-foreground/50 hover:border-primary-foreground hover:text-primary-foreground transition-colors"
+          >
             <Plus className="w-5 h-5" />
           </button>
         </div>
@@ -78,13 +102,13 @@ export default function GroupDetail() {
           <div className="bg-card rounded-xl p-4 shadow-card">
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Spend</p>
             <p className="text-xl font-bold text-foreground">
-              {formatCurrency(group.totalSpend || 450.50, group.currency)}
+              {formatCurrency(totalSpend, group.currency)}
             </p>
           </div>
           <div className="bg-card rounded-xl p-4 shadow-card">
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Your Balance</p>
-            <p className="text-xl font-bold text-success">
-              +{formatCurrency(group.yourBalance || 120.00, group.currency)}
+            <p className={`text-xl font-bold ${yourBalance >= 0 ? 'text-success' : 'text-destructive'}`}>
+              {yourBalance >= 0 ? '+' : ''}{formatCurrency(yourBalance, group.currency)}
             </p>
           </div>
         </div>
@@ -93,49 +117,77 @@ export default function GroupDetail() {
       {/* Main Content */}
       <main className="p-4 space-y-6">
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <Button 
             onClick={handleScanPaint}
             className="h-auto py-4 flex-col gap-2"
           >
             <ScanLine className="w-5 h-5" />
-            Scan & Paint
+            Scan
+          </Button>
+          <Button 
+            variant="secondary"
+            onClick={() => setShowAddExpense(true)}
+            className="h-auto py-4 flex-col gap-2"
+          >
+            <Receipt className="w-5 h-5" />
+            Add
           </Button>
           <Button 
             variant="secondary"
             className="h-auto py-4 flex-col gap-2"
           >
             <Users className="w-5 h-5" />
-            Settle Up
+            Settle
           </Button>
         </div>
 
         {/* Expenses */}
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold text-foreground">Recent Expenses</h2>
+            <h2 className="text-lg font-semibold text-foreground">
+              Expenses ({expenses.length})
+            </h2>
             <button className="text-sm text-accent font-medium hover:underline">
               View All
             </button>
           </div>
 
-          <div className="space-y-2">
-            {expenses.map((expense, index) => (
-              <ActivityItem
-                key={index}
-                {...expense}
-              />
-            ))}
-          </div>
+          {expenses.length > 0 ? (
+            <div className="space-y-2">
+              {expenses.slice(0, 5).map((expense) => {
+                const payer = group.members.find(m => m.id === expense.payerId);
+                return (
+                  <ActivityItem
+                    key={expense.id}
+                    description={expense.description}
+                    paidBy={payer?.name || 'Unknown'}
+                    date={formatExpenseDate(expense.date)}
+                    amount={expense.totalAmount}
+                    category={expense.category}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <div 
+              onClick={() => setShowAddExpense(true)}
+              className="border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
+            >
+              <Receipt className="w-8 h-8 text-muted-foreground mb-2" />
+              <p className="font-medium text-foreground">No expenses yet</p>
+              <p className="text-sm text-muted-foreground">Tap to add your first expense</p>
+            </div>
+          )}
         </section>
 
         {/* Balances */}
         <section>
           <h2 className="text-lg font-semibold text-foreground mb-3">Balances</h2>
           <div className="space-y-3">
-            {group.members.filter(m => !m.isAdmin).map((member) => {
-              const balance = Math.random() > 0.5 ? 25 + Math.random() * 50 : -(10 + Math.random() * 30);
-              const isOwed = balance > 0;
+            {group.members.map((member) => {
+              const balance = balances[member.id] || 0;
+              const isPositive = balance >= 0;
               
               return (
                 <div key={member.id} className="flex items-center gap-3 p-3 bg-card rounded-xl">
@@ -147,11 +199,22 @@ export default function GroupDetail() {
                   <div className="flex-1">
                     <p className="font-medium text-foreground">{member.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      {isOwed ? 'owes you' : 'you owe'}
+                      {balance === 0 
+                        ? 'settled up' 
+                        : isPositive 
+                          ? 'gets back' 
+                          : 'owes'
+                      }
                     </p>
                   </div>
-                  <p className={`font-semibold ${isOwed ? 'text-success' : 'text-destructive'}`}>
-                    {isOwed ? '+' : '-'}{formatCurrency(Math.abs(balance), group.currency)}
+                  <p className={`font-semibold ${
+                    balance === 0 
+                      ? 'text-muted-foreground' 
+                      : isPositive 
+                        ? 'text-success' 
+                        : 'text-destructive'
+                  }`}>
+                    {balance === 0 ? '-' : `${isPositive ? '+' : ''}${formatCurrency(balance, group.currency)}`}
                   </p>
                 </div>
               );
@@ -159,6 +222,20 @@ export default function GroupDetail() {
           </div>
         </section>
       </main>
+
+      {/* Add Expense Dialog */}
+      <AddExpenseDialog
+        open={showAddExpense}
+        onOpenChange={setShowAddExpense}
+        group={group}
+      />
+
+      {/* Add Member Dialog */}
+      <AddMemberDialog
+        open={showAddMember}
+        onOpenChange={setShowAddMember}
+        group={group}
+      />
     </div>
   );
 }
