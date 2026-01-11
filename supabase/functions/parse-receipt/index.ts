@@ -42,18 +42,26 @@ serve(async (req) => {
             content: [
               {
                 type: "text",
-                text: `Extract all items from this receipt. Return ONLY a JSON array with objects in this exact format:
-[
-  { "name": "Item Name", "price": 12.50, "quantity": 1 }
-]
+                text: `You are an expert receipt parser. Extract ONLY the purchasable line items from this receipt.
 
-Rules:
-- "name" is the item description (string)
-- "price" is the unit price as a number (not string)
-- "quantity" is the count as an integer
-- Ignore tax, tip, total, and service charges
-- If quantity is not specified, assume 1
-- Return ONLY the JSON array, no other text`
+CRITICAL RULES for calculating the correct price:
+1. If there are columns like "PRICE" (unit price) AND "SUBTOTAL"/"AMOUNT"/"TOTAL" (line total), use the SUBTOTAL/AMOUNT column divided by quantity
+2. If quantity > 1 and you see both unit price and line total, calculate: unit_price = line_total / quantity
+3. IGNORE these completely - do NOT include them as items:
+   - Tax, VAT, GST, Service charges
+   - Tips, Gratuity
+   - Grand Total, Subtotal (the summary row)
+   - Discounts
+   - Payment method lines
+   - Header/footer info (dates, addresses, invoice numbers)
+
+4. For each ACTUAL PURCHASABLE ITEM, extract:
+   - "name": The item description (clean text, no numbers/codes)
+   - "price": The UNIT PRICE (if qty=2 and total=$10, price should be 5.00)
+   - "quantity": How many were purchased (default 1 if not specified)
+
+Return ONLY a JSON array, no explanation:
+[{"name": "Item Name", "price": 12.50, "quantity": 1}]`
               },
               {
                 type: "image_url",
