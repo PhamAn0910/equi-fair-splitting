@@ -18,7 +18,6 @@ interface SettlementEdge {
 interface SettlementGraphProps {
   nodes: SettlementNode[];
   edges: SettlementEdge[];
-  currency: string;
 }
 
 // Position nodes in a circle
@@ -34,16 +33,19 @@ function calculateNodePositions(count: number, centerX: number, centerY: number,
   return positions;
 }
 
-export function SettlementGraph({ nodes, edges, currency }: SettlementGraphProps) {
+export function SettlementGraph({ nodes, edges }: SettlementGraphProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 320, height: 280 });
+  // Dynamic height based on number of nodes to prevent cut-off
+  const baseHeight = nodes.length <= 3 ? 280 : nodes.length <= 5 ? 340 : 400;
+  const [dimensions, setDimensions] = useState({ width: 320, height: baseHeight });
 
   useEffect(() => {
     if (containerRef.current) {
       const { width } = containerRef.current.getBoundingClientRect();
-      setDimensions({ width, height: 280 });
+      const height = nodes.length <= 3 ? 280 : nodes.length <= 5 ? 340 : 400;
+      setDimensions({ width, height });
     }
-  }, []);
+  }, [nodes.length]);
 
   const centerX = dimensions.width / 2;
   const centerY = dimensions.height / 2;
@@ -137,16 +139,16 @@ export function SettlementGraph({ nodes, edges, currency }: SettlementGraphProps
             {/* Balance badge */}
             {node.balance !== 0 && (
               <div
-                className={`absolute -top-1 -right-1 px-2 py-0.5 rounded-md text-xs font-semibold z-10 ${
+                className={`absolute -top-1 -right-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold z-10 whitespace-nowrap ${
                   isPositive 
                     ? 'bg-success/10 text-success' 
                     : 'bg-destructive/10 text-destructive'
                 }`}
                 style={{
-                  transform: 'translate(50%, -50%)',
+                  transform: 'translate(40%, -50%)',
                 }}
               >
-                {isPositive ? '+' : ''}{currency}{Math.abs(node.balance).toFixed(2)}
+                {isPositive ? '+' : ''}{Math.abs(node.balance).toFixed(2)}
               </div>
             )}
             
