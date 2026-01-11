@@ -56,15 +56,15 @@ export function AddExpenseDialog({ open, onOpenChange, group, onSuccess }: AddEx
   // Track members that have been manually edited (don't auto-balance them)
   const [manuallyEdited, setManuallyEdited] = useState<Set<string>>(new Set());
   
-  // Initialize with all members included
+  // Initialize with all members included (only when dialog opens)
   useEffect(() => {
     if (open && group.members.length > 0) {
       const allMemberIds = new Set(group.members.map(m => m.id));
       setIncludedMembers(allMemberIds);
       
-      // Set default payer to admin (You)
+      // Set default payer to admin (You) - only on initial open
       const admin = group.members.find(m => m.isAdmin);
-      if (admin) {
+      if (admin && !payerId) {
         setPayerId(admin.id);
       }
       
@@ -78,7 +78,7 @@ export function AddExpenseDialog({ open, onOpenChange, group, onSuccess }: AddEx
       });
       setSplitValues(initialValues);
     }
-  }, [open, group.members, splitMethod]);
+  }, [open, group.members]);
 
   // Reset form
   const resetForm = () => {
