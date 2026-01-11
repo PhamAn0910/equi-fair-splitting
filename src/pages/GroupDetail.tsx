@@ -1,19 +1,22 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MoreVertical, ScanLine, Plus, Users, Receipt, UserPlus } from 'lucide-react';
-import { useGroupStore } from '@/stores/groupStore';
+import { ArrowLeft, MoreVertical, ScanLine, Plus, Users, Receipt } from 'lucide-react';
+import { useGroups } from '@/hooks/useGroups';
+import { useGroupMembers } from '@/hooks/useGroupMembers';
 import { useExpenseStore } from '@/stores/expenseStore';
 import { MemberAvatar } from '@/components/MemberAvatar';
 import { ActivityItem } from '@/components/ActivityItem';
 import { Button } from '@/components/ui/button';
 import { AddExpenseDialog } from '@/components/AddExpenseDialog';
-import { AddMemberDialog } from '@/components/AddMemberDialog';
+import { AddMemberDialogNew } from '@/components/AddMemberDialogNew';
+import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency } from '@/lib/constants';
 
 export default function GroupDetail() {
   const { groupId } = useParams();
   const navigate = useNavigate();
-  const { groups, setActiveGroup } = useGroupStore();
+  const { groups } = useGroups();
+  const { members, isLoading: membersLoading } = useGroupMembers(groupId);
   const { getExpensesByGroup, getGroupBalances, getGroupTotalSpend } = useExpenseStore();
 
   const [showAddExpense, setShowAddExpense] = useState(false);
@@ -31,7 +34,6 @@ export default function GroupDetail() {
   }
 
   const handleScanPaint = () => {
-    setActiveGroup(group.id);
     navigate('/scan');
   };
 
@@ -40,7 +42,7 @@ export default function GroupDetail() {
   const totalSpend = getGroupTotalSpend(group.id);
 
   // Get admin balance (You)
-  const admin = group.members.find(m => m.isAdmin);
+  const admin = members.find(m => m.is_admin);
   const yourBalance = admin ? balances[admin.id] || 0 : 0;
 
   // Format date for display
@@ -53,6 +55,23 @@ export default function GroupDetail() {
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays} days ago`;
     return date.toLocaleDateString();
+  };
+
+  // Convert to format expected by AddExpenseDialog
+  const groupForDialog = {
+    id: group.id,
+    name: group.name,
+    currency: group.currency || 'EUR',
+    createdAt: group.created_at || new Date().toISOString(),
+    totalSpend: 0,
+    yourBalance: 0,
+    members: members.map(m => ({
+      id: m.id,
+      name: m.name,
+      color: '',
+      colorHex: m.avatar_color,
+      isAdmin: m.is_admin || false,
+    })),
   };
 
   return (
@@ -73,20 +92,27 @@ export default function GroupDetail() {
 
         <h1 className="text-2xl font-bold mb-1">{group.name}</h1>
         <p className="text-primary-foreground/70 mb-6">
-          {group.members.length} members
+          {members.length} members
         </p>
 
         {/* Member Row */}
         <div className="flex items-center gap-3 overflow-x-auto pb-2">
-          {group.members.map((member) => (
-            <MemberAvatar
-              key={member.id}
-              name={member.name}
-              colorHex={member.colorHex}
-              size="lg"
-              showName
-            />
-          ))}
+          {membersLoading ? (
+            <>
+              <Skeleton className="w-12 h-12 rounded-full" />
+              <Skeleton className="w-12 h-12 rounded-full" />
+            </>
+          ) : (
+            members.map((member) => (
+              <MemberAvatar
+                key={member.id}
+                name={member.name}
+                colorHex={member.avatar_color}
+                size="lg"
+                showName
+              />
+            ))
+          )}
           <button 
             onClick={() => setShowAddMember(true)}
             className="flex-shrink-0 w-12 h-12 rounded-full border-2 border-dashed border-primary-foreground/30 flex items-center justify-center text-primary-foreground/50 hover:border-primary-foreground hover:text-primary-foreground transition-colors"
@@ -102,13 +128,13 @@ export default function GroupDetail() {
           <div className="bg-card rounded-xl p-4 shadow-card">
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Spend</p>
             <p className="text-xl font-bold text-foreground">
-              {formatCurrency(totalSpend, group.currency)}
+              {formatCurrency(totalSpend, group.currency || 'EUR')}
             </p>
           </div>
           <div className="bg-card rounded-xl p-4 shadow-card">
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Your Balance</p>
             <p className={`text-xl font-bold ${yourBalance >= 0 ? 'text-success' : 'text-destructive'}`}>
-              {yourBalance >= 0 ? '+' : ''}{formatCurrency(yourBalance, group.currency)}
+              {yourBalance >= 0 ? '+' : ''}{formatCurrency(yourBalance, group.currency || 'EUR')}
             </p>
           </div>
         </div>
@@ -156,7 +182,7 @@ export default function GroupDetail() {
           {expenses.length > 0 ? (
             <div className="space-y-2">
               {expenses.slice(0, 5).map((expense) => {
-                const payer = group.members.find(m => m.id === expense.payerId);
+                const payer = members.find(m => m.id === expense.payerId);
                 return (
                   <ActivityItem
                     key={expense.id}
@@ -185,7 +211,7 @@ export default function GroupDetail() {
         <section>
           <h2 className="text-lg font-semibold text-foreground mb-3">Balances</h2>
           <div className="space-y-3">
-            {group.members.map((member) => {
+            {members.map((member) => {
               const balance = balances[member.id] || 0;
               const isPositive = balance >= 0;
               
@@ -193,7 +219,7 @@ export default function GroupDetail() {
                 <div key={member.id} className="flex items-center gap-3 p-3 bg-card rounded-xl">
                   <MemberAvatar
                     name={member.name}
-                    colorHex={member.colorHex}
+                    colorHex={member.avatar_color}
                     size="md"
                   />
                   <div className="flex-1">
@@ -214,7 +240,7 @@ export default function GroupDetail() {
                         ? 'text-success' 
                         : 'text-destructive'
                   }`}>
-                    {balance === 0 ? '-' : `${isPositive ? '+' : ''}${formatCurrency(balance, group.currency)}`}
+                    {balance === 0 ? '-' : `${isPositive ? '+' : ''}${formatCurrency(balance, group.currency || 'EUR')}`}
                   </p>
                 </div>
               );
@@ -227,14 +253,14 @@ export default function GroupDetail() {
       <AddExpenseDialog
         open={showAddExpense}
         onOpenChange={setShowAddExpense}
-        group={group}
+        group={groupForDialog}
       />
 
       {/* Add Member Dialog */}
-      <AddMemberDialog
+      <AddMemberDialogNew
         open={showAddMember}
         onOpenChange={setShowAddMember}
-        group={group}
+        groupId={groupId || ''}
       />
     </div>
   );
