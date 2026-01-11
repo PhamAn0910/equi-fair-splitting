@@ -8,6 +8,7 @@ import ScanPaint from "./pages/ScanPaint";
 import GroupDetail from "./pages/GroupDetail";
 import Activity from "./pages/Activity";
 import Expenses from "./pages/Expenses";
+import Settlement from "./pages/Settlement";
 import Account from "./pages/Account";
 import NotFound from "./pages/NotFound";
 
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/group/:groupId" element={<GroupDetail />} />
           <Route path="/activity" element={<Activity />} />
           <Route path="/expenses" element={<Expenses />} />
+          <Route path="/settle" element={<Settlement />} />
           <Route path="/account" element={<Account />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

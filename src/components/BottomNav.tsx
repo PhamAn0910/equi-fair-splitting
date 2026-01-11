@@ -1,11 +1,12 @@
 import { cn } from '@/lib/utils';
-import { Home, MessageSquare, Receipt, User } from 'lucide-react';
+import { Home, MessageSquare, Receipt, RefreshCw, User } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const navItems = [
   { icon: Home, label: 'Home', path: '/' },
   { icon: MessageSquare, label: 'Activity', path: '/activity' },
   { icon: Receipt, label: 'Expenses', path: '/expenses' },
+  { icon: RefreshCw, label: 'Settle', path: '/settle' },
   { icon: User, label: 'Account', path: '/account' },
 ];
 
