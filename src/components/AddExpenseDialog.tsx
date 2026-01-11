@@ -53,6 +53,8 @@ export function AddExpenseDialog({ open, onOpenChange, group, onSuccess }: AddEx
   // Split assignments: memberId -> value (shares/percentage/amount)
   const [splitValues, setSplitValues] = useState<Record<string, number>>({});
   const [includedMembers, setIncludedMembers] = useState<Set<string>>(new Set());
+  // Track members that have been manually edited (don't auto-balance them)
+  const [manuallyEdited, setManuallyEdited] = useState<Set<string>>(new Set());
   
   // Initialize with all members included
   useEffect(() => {
@@ -156,53 +158,69 @@ export function AddExpenseDialog({ open, onOpenChange, group, onSuccess }: AddEx
   const updateSplitValue = (memberId: string, value: number, autoBalance = false) => {
     const newValue = Math.max(0, value);
     
+    // Mark this member as manually edited
+    setManuallyEdited(prev => new Set(prev).add(memberId));
+    
     if (autoBalance && includedMembers.size > 1) {
       const includedMemberIds = Array.from(includedMembers);
-      const otherMembers = includedMemberIds.filter(id => id !== memberId);
+      // Only auto-balance members that haven't been manually edited
+      const adjustableMembers = includedMemberIds.filter(id => id !== memberId && !manuallyEdited.has(id));
+      
+      if (adjustableMembers.length === 0) {
+        // All others are manually edited, just update this one
+        setSplitValues(prev => ({ ...prev, [memberId]: newValue }));
+        return;
+      }
       
       if (splitMethod === 'percentage') {
-        // Auto-balance percentages to sum to 100%
-        const remaining = 100 - newValue;
-        const othersTotalCurrent = otherMembers.reduce((sum, id) => sum + (splitValues[id] || 0), 0);
+        // Calculate remaining percentage after accounting for this member and other manually edited members
+        const manuallyEditedTotal = Array.from(manuallyEdited)
+          .filter(id => id !== memberId && includedMemberIds.includes(id))
+          .reduce((sum, id) => sum + (splitValues[id] || 0), 0);
+        const remaining = 100 - newValue - manuallyEditedTotal;
+        const adjustableTotalCurrent = adjustableMembers.reduce((sum, id) => sum + (splitValues[id] || 0), 0);
         
         setSplitValues(prev => {
           const updated = { ...prev, [memberId]: newValue };
           
-          if (othersTotalCurrent > 0) {
-            // Distribute proportionally
-            otherMembers.forEach(id => {
-              const proportion = (prev[id] || 0) / othersTotalCurrent;
+          if (adjustableTotalCurrent > 0) {
+            // Distribute proportionally among adjustable members
+            adjustableMembers.forEach(id => {
+              const proportion = (prev[id] || 0) / adjustableTotalCurrent;
               updated[id] = Math.max(0, Math.round(remaining * proportion * 100) / 100);
             });
-          } else if (otherMembers.length > 0) {
-            // Equal distribution if all others are 0
-            const perMember = remaining / otherMembers.length;
-            otherMembers.forEach(id => {
-              updated[id] = Math.round(perMember * 100) / 100;
+          } else if (adjustableMembers.length > 0) {
+            // Equal distribution if all adjustable are 0
+            const perMember = remaining / adjustableMembers.length;
+            adjustableMembers.forEach(id => {
+              updated[id] = Math.max(0, Math.round(perMember * 100) / 100);
             });
           }
           
           return updated;
         });
       } else if (splitMethod === 'amounts') {
-        // Auto-balance amounts to sum to total
-        const remaining = numericAmount - newValue;
-        const othersTotalCurrent = otherMembers.reduce((sum, id) => sum + (splitValues[id] || 0), 0);
+        // Calculate remaining amount after accounting for this member and other manually edited members
+        const manuallyEditedTotal = Array.from(manuallyEdited)
+          .filter(id => id !== memberId && includedMemberIds.includes(id))
+          .reduce((sum, id) => sum + (splitValues[id] || 0), 0);
+        const remaining = numericAmount - newValue - manuallyEditedTotal;
+        const adjustableTotalCurrent = adjustableMembers.reduce((sum, id) => sum + (splitValues[id] || 0), 0);
         
         setSplitValues(prev => {
           const updated = { ...prev, [memberId]: newValue };
           
-          if (othersTotalCurrent > 0) {
-            // Distribute proportionally
-            otherMembers.forEach(id => {
-              const proportion = (prev[id] || 0) / othersTotalCurrent;
+          if (adjustableTotalCurrent > 0) {
+            // Distribute proportionally among adjustable members
+            adjustableMembers.forEach(id => {
+              const proportion = (prev[id] || 0) / adjustableTotalCurrent;
               updated[id] = Math.max(0, Math.round(remaining * proportion * 100) / 100);
             });
-          } else if (otherMembers.length > 0) {
-            // Equal distribution if all others are 0
-            const perMember = remaining / otherMembers.length;
-            otherMembers.forEach(id => {
-              updated[id] = Math.round(perMember * 100) / 100;
+          } else if (adjustableMembers.length > 0) {
+            // Equal distribution if all adjustable are 0
+            const perMember = remaining / adjustableMembers.length;
+            adjustableMembers.forEach(id => {
+              updated[id] = Math.max(0, Math.round(perMember * 100) / 100);
             });
           }
           
@@ -218,6 +236,8 @@ export function AddExpenseDialog({ open, onOpenChange, group, onSuccess }: AddEx
 
   const handleMethodChange = (method: SplitMethod) => {
     setSplitMethod(method);
+    // Clear manually edited tracking when switching methods
+    setManuallyEdited(new Set());
     
     // Reset values based on new method
     const newValues: Record<string, number> = {};
@@ -432,7 +452,16 @@ export function AddExpenseDialog({ open, onOpenChange, group, onSuccess }: AddEx
                             >
                               <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
                             </button>
-                            <span className="w-8 sm:w-10 text-center font-medium text-sm">{Math.round(currentValue)}%</span>
+                            <div className="relative">
+                              <input
+                                type="number"
+                                inputMode="numeric"
+                                value={Math.round(currentValue)}
+                                onChange={(e) => updateSplitValue(member.id, parseFloat(e.target.value) || 0, true)}
+                                className="w-10 sm:w-12 text-center font-medium text-sm bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              />
+                              <span className="absolute right-0 top-1/2 -translate-y-1/2 text-sm font-medium pointer-events-none">%</span>
+                            </div>
                             <button
                               type="button"
                               onClick={() => updateSplitValue(member.id, currentValue + 1, true)}
@@ -452,7 +481,14 @@ export function AddExpenseDialog({ open, onOpenChange, group, onSuccess }: AddEx
                             >
                               <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
                             </button>
-                            <span className="w-10 sm:w-12 text-center font-medium text-sm">{currentValue.toFixed(2)}</span>
+                            <input
+                              type="number"
+                              inputMode="decimal"
+                              step="0.01"
+                              value={currentValue.toFixed(2)}
+                              onChange={(e) => updateSplitValue(member.id, parseFloat(e.target.value) || 0, true)}
+                              className="w-12 sm:w-14 text-center font-medium text-sm bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
                             <button
                               type="button"
                               onClick={() => updateSplitValue(member.id, currentValue + 1, true)}
