@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, MoreVertical, Plus, Check, Camera, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { ArrowLeft, MoreVertical, Plus, Check, Camera, Image as ImageIcon, Loader2, Receipt } from 'lucide-react';
 import { usePaintStore, type ExpenseItem } from '@/stores/paintStore';
 import { useGroupStore } from '@/stores/groupStore';
-import { useExpenseStore, calculateSplits } from '@/stores/expenseStore';
+import { useExpenseStore } from '@/stores/expenseStore';
 import { MemberAvatar } from '@/components/MemberAvatar';
 import { ExpenseItemRow } from '@/components/ExpenseItemRow';
 import { Button } from '@/components/ui/button';
@@ -20,14 +20,17 @@ export default function ScanPaint() {
     members,
     activeMemberId,
     items,
+    fees,
     assignments,
     setActiveMember,
-    setItems,
+    setReceiptData,
     toggleAssignment,
     getItemAssignees,
     getUnassignedTotal,
     getBillTotal,
-    getMemberTotal,
+    getItemsSubtotal,
+    getTotalFees,
+    getMemberBreakdown,
     reset,
   } = usePaintStore();
 
@@ -61,16 +64,10 @@ export default function ScanPaint() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const parsedItems = await parseReceipt(file);
+    const receiptData = await parseReceipt(file);
     
-    if (parsedItems.length > 0) {
-      const expenseItems: ExpenseItem[] = parsedItems.map(item => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-      }));
-      setItems(expenseItems);
+    if (receiptData.items.length > 0) {
+      setReceiptData(receiptData);
       setHasScanned(true);
     }
     
@@ -96,24 +93,17 @@ export default function ScanPaint() {
   const handleConfirmSplit = () => {
     if (!activeGroup || unassignedTotal > 0) return;
 
-    // Create splits from item assignments
-    const memberTotals: Record<string, number> = {};
-    
-    for (const item of items) {
-      const assigneeIds = assignments[item.id] || [];
-      if (assigneeIds.length > 0) {
-        const perPersonAmount = (item.price * item.quantity) / assigneeIds.length;
-        for (const memberId of assigneeIds) {
-          memberTotals[memberId] = (memberTotals[memberId] || 0) + perPersonAmount;
-        }
-      }
-    }
-
-    const splits = Object.entries(memberTotals).map(([memberId, amount]) => ({
-      memberId,
-      value: amount,
-      calculatedAmount: amount,
-    }));
+    // Create splits from member breakdown (includes proportional fees)
+    const splits = members
+      .map(member => {
+        const breakdown = getMemberBreakdown(member.id);
+        return {
+          memberId: member.id,
+          value: breakdown.grandTotal,
+          calculatedAmount: breakdown.grandTotal,
+        };
+      })
+      .filter(split => split.value > 0);
 
     // Find first member (assume they paid, or use first admin)
     const payer = members.find(m => m.isAdmin) || members[0];
@@ -142,9 +132,12 @@ export default function ScanPaint() {
   };
 
   const billTotal = getBillTotal();
+  const itemsSubtotal = getItemsSubtotal();
+  const totalFees = getTotalFees();
   const unassignedTotal = getUnassignedTotal();
-  const assignedTotal = billTotal - unassignedTotal;
-  const progressPercent = billTotal > 0 ? (assignedTotal / billTotal) * 100 : 0;
+  const assignedTotal = itemsSubtotal - unassignedTotal;
+  const progressPercent = itemsSubtotal > 0 ? (assignedTotal / itemsSubtotal) * 100 : 0;
+  const hasFees = totalFees !== 0;
 
   if (!activeGroup) {
     return (
@@ -265,7 +258,7 @@ export default function ScanPaint() {
                 size="sm"
                 onClick={() => {
                   setHasScanned(false);
-                  setItems([]);
+                  reset();
                 }}
               >
                 Scan Again
@@ -285,6 +278,44 @@ export default function ScanPaint() {
                 />
               );
             })}
+
+            {/* Fees Summary (non-assignable) */}
+            {hasFees && (
+              <div className="mt-4 pt-4 border-t border-border">
+                <div className="flex items-center gap-2 mb-2">
+                  <Receipt className="w-4 h-4 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    Fees (split proportionally)
+                  </p>
+                </div>
+                <div className="space-y-1 text-sm">
+                  {fees.tax > 0 && (
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Tax</span>
+                      <span>{formatCurrency(fees.tax, activeGroup.currency)}</span>
+                    </div>
+                  )}
+                  {fees.tip > 0 && (
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Tip</span>
+                      <span>{formatCurrency(fees.tip, activeGroup.currency)}</span>
+                    </div>
+                  )}
+                  {fees.service_charge > 0 && (
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Service Charge</span>
+                      <span>{formatCurrency(fees.service_charge, activeGroup.currency)}</span>
+                    </div>
+                  )}
+                  {fees.discount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Discount</span>
+                      <span>-{formatCurrency(fees.discount, activeGroup.currency)}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>
@@ -300,6 +331,9 @@ export default function ScanPaint() {
               </span>
               <span className="text-muted-foreground">
                 TOTAL: <span className="text-foreground font-medium">{formatCurrency(billTotal, activeGroup.currency)}</span>
+                {hasFees && (
+                  <span className="text-xs text-muted-foreground ml-1">(incl. fees)</span>
+                )}
               </span>
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -310,19 +344,34 @@ export default function ScanPaint() {
             </div>
           </div>
 
-          {/* Member Breakdown - Quick Preview */}
-          <div className="flex items-center justify-between gap-2 mb-4 overflow-x-auto pb-2">
+          {/* Member Breakdown - Shows items + proportional fees */}
+          <div className="flex flex-col gap-2 mb-4">
             {members.map((member) => {
-              const total = getMemberTotal(member.id);
-              if (total === 0) return null;
+              const breakdown = getMemberBreakdown(member.id);
+              if (breakdown.grandTotal === 0) return null;
+              
+              const hasFeesForMember = breakdown.taxShare > 0 || breakdown.tipShare > 0 || 
+                                        breakdown.serviceShare > 0 || breakdown.discountShare > 0;
+              
               return (
-                <div key={member.id} className="flex items-center gap-2 flex-shrink-0">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: member.colorHex }}
-                  />
-                  <span className="text-sm text-muted-foreground">{member.name}:</span>
-                  <span className="text-sm font-medium">{formatCurrency(total, activeGroup.currency)}</span>
+                <div key={member.id} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: member.colorHex }}
+                    />
+                    <span className="text-sm text-muted-foreground">{member.name}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm font-medium">
+                      {formatCurrency(breakdown.grandTotal, activeGroup.currency)}
+                    </span>
+                    {hasFeesForMember && (
+                      <span className="text-xs text-muted-foreground ml-1">
+                        ({formatCurrency(breakdown.itemsTotal, activeGroup.currency)} + fees)
+                      </span>
+                    )}
+                  </div>
                 </div>
               );
             })}
