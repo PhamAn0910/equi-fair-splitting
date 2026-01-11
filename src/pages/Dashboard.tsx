@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ScanLine, BarChart3, Filter, Plus, X } from 'lucide-react';
 import { useGroupStore } from '@/stores/groupStore';
+import { useExpenseStore } from '@/stores/expenseStore';
 import { BalanceCard } from '@/components/BalanceCard';
 import { QuickActionButton } from '@/components/QuickActionButton';
 import { ActivityItem } from '@/components/ActivityItem';
@@ -19,7 +20,9 @@ import {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { groups, createGroup, addMember, getActiveGroup, setActiveGroup } = useGroupStore();
+  const { groups, createGroup, addMember, removeMember, getActiveGroup, setActiveGroup } = useGroupStore();
+  const { expenses, getGroupBalances, getGroupTotalSpend } = useExpenseStore();
+  
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [newMemberName, setNewMemberName] = useState('');
@@ -28,12 +31,32 @@ export default function Dashboard() {
   const activeGroup = getActiveGroup();
   const hasGroups = groups.length > 0;
 
-  // Mock recent activity
-  const recentActivity = [
-    { description: 'Pho 10 Ly Quoc Su', paidBy: 'Alex', date: 'Yesterday', amount: 15.50, isOwed: true, category: 'food' as const },
-    { description: 'Grab to Hotel', paidBy: 'Sarah', date: '2 days ago', amount: 8.20, isOwed: false, category: 'transport' as const },
-    { description: 'Rooftop Drinks', paidBy: 'You', date: '3 days ago', amount: 42.00, isOwed: false, category: 'drinks' as const },
-  ];
+  // Get real recent activity from all groups
+  const recentActivity = expenses
+    .slice(0, 5)
+    .map(expense => {
+      const group = groups.find(g => g.id === expense.groupId);
+      const payer = group?.members.find(m => m.id === expense.payerId);
+      const diffDays = Math.floor((Date.now() - new Date(expense.date).getTime()) / (1000 * 60 * 60 * 24));
+      
+      return {
+        description: expense.description,
+        paidBy: payer?.name || 'Unknown',
+        date: diffDays === 0 ? 'Today' : diffDays === 1 ? 'Yesterday' : `${diffDays} days ago`,
+        amount: expense.totalAmount,
+        category: expense.category,
+      };
+    });
+
+  // Calculate active group stats
+  const activeGroupStats = activeGroup ? {
+    totalSpend: getGroupTotalSpend(activeGroup.id),
+    balances: getGroupBalances(activeGroup.id),
+  } : null;
+
+  const yourBalance = activeGroup && activeGroupStats
+    ? activeGroupStats.balances[activeGroup.members.find(m => m.isAdmin)?.id || ''] || 0
+    : 0;
 
   const handleCreateGroup = () => {
     if (!newGroupName.trim()) return;
@@ -48,12 +71,18 @@ export default function Dashboard() {
     setNewMemberName('');
   };
 
+  const handleRemoveMember = (memberId: string) => {
+    if (!createdGroup) return;
+    removeMember(createdGroup, memberId);
+  };
+
   const handleFinishSetup = () => {
     setShowCreateGroup(false);
-    setCreatedGroup(null);
     if (createdGroup) {
       setActiveGroup(createdGroup);
+      navigate(`/group/${createdGroup}`);
     }
+    setCreatedGroup(null);
   };
 
   const currentCreatingGroup = groups.find(g => g.id === createdGroup);
@@ -89,17 +118,22 @@ export default function Dashboard() {
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold text-foreground">Active Trip</h2>
-            <button className="text-sm text-accent font-medium hover:underline">
-              View All
-            </button>
+            {hasGroups && (
+              <button 
+                onClick={() => navigate('/expenses')}
+                className="text-sm text-accent font-medium hover:underline"
+              >
+                View All
+              </button>
+            )}
           </div>
 
           {hasGroups && activeGroup ? (
             <BalanceCard
               groupName={activeGroup.name}
               currency={activeGroup.currency}
-              yourBalance={activeGroup.yourBalance || 120}
-              totalSpend={activeGroup.totalSpend || 1450.50}
+              yourBalance={yourBalance}
+              totalSpend={activeGroupStats?.totalSpend || 0}
               members={activeGroup.members}
               onClick={() => navigate(`/group/${activeGroup.id}`)}
             />
@@ -123,7 +157,7 @@ export default function Dashboard() {
             icon={ScanLine}
             label="Scan & Paint"
             sublabel="Split bill instantly"
-            onClick={() => navigate('/scan')}
+            onClick={() => activeGroup ? navigate('/scan') : setShowCreateGroup(true)}
           />
           <QuickActionButton
             icon={BarChart3}
@@ -142,14 +176,21 @@ export default function Dashboard() {
             </button>
           </div>
 
-          <div className="space-y-2">
-            {recentActivity.map((activity, index) => (
-              <ActivityItem
-                key={index}
-                {...activity}
-              />
-            ))}
-          </div>
+          {recentActivity.length > 0 ? (
+            <div className="space-y-2">
+              {recentActivity.map((activity, index) => (
+                <ActivityItem
+                  key={index}
+                  {...activity}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">No recent activity</p>
+              <p className="text-sm text-muted-foreground">Create a group and add expenses to see activity here</p>
+            </div>
+          )}
         </section>
       </main>
 
@@ -194,22 +235,29 @@ export default function Dashboard() {
               {/* Current members */}
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
-                  Members
+                  Members ({currentCreatingGroup?.members.length || 0})
                 </label>
-                <div className="flex flex-wrap gap-2 mb-3">
+                <div className="space-y-2">
                   {currentCreatingGroup?.members.map((member) => (
                     <div
                       key={member.id}
-                      className="flex items-center gap-2 bg-muted px-3 py-1.5 rounded-full"
+                      className="flex items-center gap-3 bg-muted/50 px-3 py-2 rounded-xl"
                     >
                       <div
-                        className="w-4 h-4 rounded-full"
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white"
                         style={{ backgroundColor: member.colorHex }}
-                      />
-                      <span className="text-sm font-medium">{member.name}</span>
-                      {!member.isAdmin && (
-                        <button className="text-muted-foreground hover:text-destructive">
-                          <X className="w-3 h-3" />
+                      >
+                        {member.name.slice(0, 2).toUpperCase()}
+                      </div>
+                      <span className="flex-1 font-medium">{member.name}</span>
+                      {member.isAdmin ? (
+                        <span className="text-xs text-muted-foreground">Organizer</span>
+                      ) : (
+                        <button 
+                          onClick={() => handleRemoveMember(member.id)}
+                          className="text-muted-foreground hover:text-destructive transition-colors"
+                        >
+                          <X className="w-4 h-4" />
                         </button>
                       )}
                     </div>
@@ -238,7 +286,7 @@ export default function Dashboard() {
                 onClick={handleFinishSetup} 
                 className="w-full"
               >
-                Done
+                Start Splitting
               </Button>
             </div>
           )}
