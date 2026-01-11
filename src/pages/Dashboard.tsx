@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ScanLine, BarChart3, Filter, Plus, X } from 'lucide-react';
-import { useGroups } from '@/hooks/useGroups';
-import { useGroupMembers } from '@/hooks/useGroupMembers';
+import { useGroupStore } from '@/stores/groupStore';
 import { useExpenseStore } from '@/stores/expenseStore';
 import { BalanceCard } from '@/components/BalanceCard';
 import { QuickActionButton } from '@/components/QuickActionButton';
@@ -12,124 +11,81 @@ import { FloatingAddButton } from '@/components/FloatingAddButton';
 import { MemberAvatar } from '@/components/MemberAvatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useAuth } from '@/hooks/useAuth';
-import { getNextColor, MEMBER_COLORS } from '@/lib/constants';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { groups, isLoading, createGroup, isCreating } = useGroups();
+  const { groups, createGroup, addMember, removeMember, getActiveGroup, setActiveGroup } = useGroupStore();
   const { expenses, getGroupBalances, getGroupTotalSpend } = useExpenseStore();
   
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [newMemberName, setNewMemberName] = useState('');
-  const [createdGroupId, setCreatedGroupId] = useState<string | null>(null);
-  const [pendingMembers, setPendingMembers] = useState<Array<{ id: string; name: string; colorHex: string }>>([]);
-  
-  // Use the members hook for the created group
-  const { members: createdGroupMembers, addMember, isAdding } = useGroupMembers(createdGroupId || undefined);
+  const [createdGroup, setCreatedGroup] = useState<string | null>(null);
 
-  const activeGroup = groups[0]; // First group is the most recent
+  const activeGroup = getActiveGroup();
   const hasGroups = groups.length > 0;
-
-  // Get display name from email
-  const displayName = user?.email?.split('@')[0] || 'You';
 
   // Get real recent activity from all groups
   const recentActivity = expenses
     .slice(0, 5)
     .map(expense => {
+      const group = groups.find(g => g.id === expense.groupId);
+      const payer = group?.members.find(m => m.id === expense.payerId);
       const diffDays = Math.floor((Date.now() - new Date(expense.date).getTime()) / (1000 * 60 * 60 * 24));
       
       return {
         description: expense.description,
-        paidBy: 'Unknown',
+        paidBy: payer?.name || 'Unknown',
         date: diffDays === 0 ? 'Today' : diffDays === 1 ? 'Yesterday' : `${diffDays} days ago`,
         amount: expense.totalAmount,
         category: expense.category,
       };
     });
 
-  const handleCreateGroup = async () => {
+  // Calculate active group stats
+  const activeGroupStats = activeGroup ? {
+    totalSpend: getGroupTotalSpend(activeGroup.id),
+    balances: getGroupBalances(activeGroup.id),
+  } : null;
+
+  const yourBalance = activeGroup && activeGroupStats
+    ? activeGroupStats.balances[activeGroup.members.find(m => m.isAdmin)?.id || ''] || 0
+    : 0;
+
+  const handleCreateGroup = () => {
     if (!newGroupName.trim()) return;
-    
-    createGroup(
-      { name: newGroupName.trim(), currency: 'EUR' },
-      {
-        onSuccess: (data) => {
-          setCreatedGroupId(data.id);
-          setNewGroupName('');
-          // Add the admin member automatically
-          const adminColor = MEMBER_COLORS[0];
-          addMember({ 
-            name: displayName, 
-            avatarColor: adminColor.hex, 
-            isAdmin: true 
-          });
-        }
-      }
-    );
+    const group = createGroup(newGroupName.trim());
+    setCreatedGroup(group.id);
+    setNewGroupName('');
   };
 
   const handleAddMember = () => {
-    if (!newMemberName.trim() || !createdGroupId) return;
-    
-    // Get next available color
-    const usedColors = createdGroupMembers.map(m => m.avatar_color);
-    const nextColor = getNextColor(usedColors.map(c => {
-      const found = MEMBER_COLORS.find(mc => mc.hex === c);
-      return found?.name || '';
-    }));
-    
-    addMember({ 
-      name: newMemberName.trim(), 
-      avatarColor: nextColor.hex,
-      isAdmin: false 
-    });
+    if (!newMemberName.trim() || !createdGroup) return;
+    addMember(createdGroup, newMemberName.trim());
     setNewMemberName('');
+  };
+
+  const handleRemoveMember = (memberId: string) => {
+    if (!createdGroup) return;
+    removeMember(createdGroup, memberId);
   };
 
   const handleFinishSetup = () => {
     setShowCreateGroup(false);
-    if (createdGroupId) {
-      navigate(`/group/${createdGroupId}`);
+    if (createdGroup) {
+      setActiveGroup(createdGroup);
+      navigate(`/group/${createdGroup}`);
     }
-    setCreatedGroupId(null);
-    setPendingMembers([]);
+    setCreatedGroup(null);
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background pb-24">
-        <header className="px-4 pt-4 pb-2 safe-top">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <Skeleton className="h-4 w-24 mb-2" />
-              <Skeleton className="h-8 w-32" />
-            </div>
-            <Skeleton className="h-12 w-12 rounded-full" />
-          </div>
-          <Skeleton className="h-10 w-full" />
-        </header>
-        <main className="px-4 space-y-6 mt-4">
-          <Skeleton className="h-40 w-full rounded-2xl" />
-          <div className="grid grid-cols-2 gap-3">
-            <Skeleton className="h-24 rounded-xl" />
-            <Skeleton className="h-24 rounded-xl" />
-          </div>
-        </main>
-        <BottomNav />
-      </div>
-    );
-  }
+  const currentCreatingGroup = groups.find(g => g.id === createdGroup);
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -138,10 +94,10 @@ export default function Dashboard() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-muted-foreground text-sm">Welcome back,</p>
-            <h1 className="text-2xl font-bold text-foreground">{displayName}!</h1>
+            <h1 className="text-2xl font-bold text-foreground">Shinomiya!</h1>
           </div>
           <MemberAvatar
-            name={displayName}
+            name="You"
             colorHex="#6B7B5F"
             size="lg"
           />
@@ -175,10 +131,10 @@ export default function Dashboard() {
           {hasGroups && activeGroup ? (
             <BalanceCard
               groupName={activeGroup.name}
-              currency={activeGroup.currency || 'EUR'}
-              yourBalance={0}
-              totalSpend={0}
-              members={[]}
+              currency={activeGroup.currency}
+              yourBalance={yourBalance}
+              totalSpend={activeGroupStats?.totalSpend || 0}
+              members={activeGroup.members}
               onClick={() => navigate(`/group/${activeGroup.id}`)}
             />
           ) : (
@@ -249,11 +205,11 @@ export default function Dashboard() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {createdGroupId ? 'Add Members' : 'Create New Group'}
+              {createdGroup ? 'Add Members' : 'Create New Group'}
             </DialogTitle>
           </DialogHeader>
 
-          {!createdGroupId ? (
+          {!createdGroup ? (
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
@@ -269,9 +225,9 @@ export default function Dashboard() {
               <Button 
                 onClick={handleCreateGroup} 
                 className="w-full"
-                disabled={!newGroupName.trim() || isCreating}
+                disabled={!newGroupName.trim()}
               >
-                {isCreating ? 'Creating...' : 'Create Group'}
+                Create Group
               </Button>
             </div>
           ) : (
@@ -279,23 +235,30 @@ export default function Dashboard() {
               {/* Current members */}
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
-                  Members ({createdGroupMembers.length})
+                  Members ({currentCreatingGroup?.members.length || 0})
                 </label>
                 <div className="space-y-2">
-                  {createdGroupMembers.map((member) => (
+                  {currentCreatingGroup?.members.map((member) => (
                     <div
                       key={member.id}
                       className="flex items-center gap-3 bg-muted/50 px-3 py-2 rounded-xl"
                     >
                       <div
                         className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white"
-                        style={{ backgroundColor: member.avatar_color }}
+                        style={{ backgroundColor: member.colorHex }}
                       >
                         {member.name.slice(0, 2).toUpperCase()}
                       </div>
                       <span className="flex-1 font-medium">{member.name}</span>
-                      {member.is_admin && (
+                      {member.isAdmin ? (
                         <span className="text-xs text-muted-foreground">Organizer</span>
+                      ) : (
+                        <button 
+                          onClick={() => handleRemoveMember(member.id)}
+                          className="text-muted-foreground hover:text-destructive transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
                       )}
                     </div>
                   ))}
@@ -313,7 +276,7 @@ export default function Dashboard() {
                 <Button 
                   onClick={handleAddMember}
                   variant="secondary"
-                  disabled={!newMemberName.trim() || isAdding}
+                  disabled={!newMemberName.trim()}
                 >
                   <Plus className="w-4 h-4" />
                 </Button>

@@ -1,17 +1,8 @@
-import { useNavigate } from 'react-router-dom';
 import { BottomNav } from '@/components/BottomNav';
 import { MemberAvatar } from '@/components/MemberAvatar';
 import { Settings, Bell, CreditCard, HelpCircle, LogOut, ChevronRight } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'sonner';
 
 export default function Account() {
-  const navigate = useNavigate();
-  const { user, signOut } = useAuth();
-  
-  const displayName = user?.email?.split('@')[0] || 'User';
-  const email = user?.email || '';
-
   const menuItems = [
     { icon: Settings, label: 'Settings', description: 'App preferences' },
     { icon: Bell, label: 'Notifications', description: 'Manage alerts' },
@@ -19,24 +10,14 @@ export default function Account() {
     { icon: HelpCircle, label: 'Help & Support', description: 'Get assistance' },
   ];
 
-  const handleSignOut = async () => {
-    const { error } = await signOut();
-    if (error) {
-      toast.error('Failed to sign out');
-    } else {
-      toast.success('Signed out successfully');
-      navigate('/auth');
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background pb-24">
       <header className="px-4 pt-6 pb-6 safe-top">
         <div className="flex items-center gap-4">
-          <MemberAvatar name={displayName} colorHex="#6B7B5F" size="xl" />
+          <MemberAvatar name="Shinomiya" colorHex="#6B7B5F" size="xl" />
           <div>
-            <h1 className="text-xl font-bold text-foreground">{displayName}</h1>
-            <p className="text-muted-foreground">{email}</p>
+            <h1 className="text-xl font-bold text-foreground">Shinomiya</h1>
+            <p className="text-muted-foreground">shinomiya@email.com</p>
           </div>
         </div>
       </header>
@@ -58,10 +39,7 @@ export default function Account() {
           </button>
         ))}
 
-        <button 
-          onClick={handleSignOut}
-          className="w-full flex items-center gap-4 p-4 bg-card rounded-xl hover:bg-destructive/10 transition-colors mt-6"
-        >
+        <button className="w-full flex items-center gap-4 p-4 bg-card rounded-xl hover:bg-destructive/10 transition-colors mt-6">
           <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
             <LogOut className="w-5 h-5 text-destructive" />
           </div>
