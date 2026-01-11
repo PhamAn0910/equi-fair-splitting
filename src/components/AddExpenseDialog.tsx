@@ -202,7 +202,7 @@ export function AddExpenseDialog({ open, onOpenChange, group, onSuccess }: AddEx
           {/* Amount */}
           <div>
             <label className="text-sm font-medium text-foreground mb-2 block">
-              Total Amount ({group.currency})
+              Total Amount
             </label>
             <Input
               type="number"
@@ -272,22 +272,34 @@ export function AddExpenseDialog({ open, onOpenChange, group, onSuccess }: AddEx
             <label className="text-sm font-medium text-foreground mb-2 block">
               Split method
             </label>
-            <div className="grid grid-cols-4 gap-2">
-              {(['equal', 'shares', 'percentage', 'amounts'] as SplitMethod[]).map((method) => (
-                <button
-                  key={method}
-                  type="button"
-                  onClick={() => handleMethodChange(method)}
-                  className={cn(
-                    'py-2 px-3 rounded-lg text-sm font-medium capitalize transition-all',
-                    splitMethod === method
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted hover:bg-muted/80 text-foreground'
-                  )}
-                >
-                  {method === 'amounts' ? 'Amount' : method}
-                </button>
-              ))}
+            <div className="grid grid-cols-4 gap-1 sm:gap-2">
+              {(['equal', 'shares', 'percentage', 'amounts'] as SplitMethod[]).map((method) => {
+                const getLabel = () => {
+                  if (method === 'percentage') return <span className="sm:hidden">%</span>;
+                  if (method === 'amounts') return 'Amt';
+                  return method;
+                };
+                const getFullLabel = () => {
+                  if (method === 'percentage') return <span className="hidden sm:inline">Percentage</span>;
+                  return null;
+                };
+                return (
+                  <button
+                    key={method}
+                    type="button"
+                    onClick={() => handleMethodChange(method)}
+                    className={cn(
+                      'py-2 px-1 sm:px-3 rounded-lg text-xs sm:text-sm font-medium capitalize transition-all',
+                      splitMethod === method
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted hover:bg-muted/80 text-foreground'
+                    )}
+                  >
+                    {getLabel()}
+                    {getFullLabel()}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -337,47 +349,46 @@ export function AddExpenseDialog({ open, onOpenChange, group, onSuccess }: AddEx
                     </div>
                     
                     {isIncluded && splitMethod !== 'equal' && (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                         {splitMethod === 'shares' && (
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-0.5 sm:gap-1">
                             <button
                               type="button"
                               onClick={() => updateSplitValue(member.id, currentValue - 1)}
                               className="p-1 rounded-full hover:bg-muted"
                             >
-                              <Minus className="w-4 h-4" />
+                              <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
                             </button>
-                            <span className="w-8 text-center font-medium">{currentValue}</span>
+                            <span className="w-6 sm:w-8 text-center font-medium text-sm">{currentValue}</span>
                             <button
                               type="button"
                               onClick={() => updateSplitValue(member.id, currentValue + 1)}
                               className="p-1 rounded-full hover:bg-muted"
                             >
-                              <Plus className="w-4 h-4" />
+                              <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                             </button>
                           </div>
                         )}
                         
                         {splitMethod === 'percentage' && (
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-0.5 sm:gap-1">
                             <Input
                               type="number"
                               value={currentValue}
                               onChange={(e) => updateSplitValue(member.id, parseFloat(e.target.value) || 0)}
-                              className="w-16 h-8 text-center text-sm"
+                              className="w-12 sm:w-16 h-7 sm:h-8 text-center text-xs sm:text-sm"
                             />
-                            <span className="text-sm text-muted-foreground">%</span>
+                            <span className="text-xs sm:text-sm text-muted-foreground">%</span>
                           </div>
                         )}
                         
                         {splitMethod === 'amounts' && (
-                          <div className="flex items-center gap-1">
-                            <span className="text-sm text-muted-foreground">{group.currency}</span>
+                          <div className="flex items-center gap-0.5 sm:gap-1">
                             <Input
                               type="number"
                               value={currentValue}
                               onChange={(e) => updateSplitValue(member.id, parseFloat(e.target.value) || 0)}
-                              className="w-20 h-8 text-right text-sm"
+                              className="w-16 sm:w-20 h-7 sm:h-8 text-right text-xs sm:text-sm"
                             />
                           </div>
                         )}
@@ -385,8 +396,8 @@ export function AddExpenseDialog({ open, onOpenChange, group, onSuccess }: AddEx
                     )}
                     
                     {isIncluded && (
-                      <div className="text-right min-w-16">
-                        <p className="font-semibold text-foreground">
+                      <div className="text-right min-w-12 sm:min-w-16">
+                        <p className="font-semibold text-foreground text-xs sm:text-sm">
                           {formatCurrency(splitData?.calculatedAmount || 0, group.currency)}
                         </p>
                       </div>
