@@ -1,0 +1,4 @@
+project_id = "jpmskbupvrqwvnmfcfib"
+
+[functions.parse-receipt]
+verify_jwt = false
