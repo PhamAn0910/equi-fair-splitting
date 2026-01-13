@@ -61,7 +61,7 @@ export default function Groups() {
         <p className="text-muted-foreground">Your trips and expense groups</p>
       </header>
 
-      <main className="px-4 space-y-3">
+      <main className="px-4 space-y-2">
         {groups.map((group) => {
           const totalSpend = getGroupTotalSpend(group.id);
           const balances = getGroupBalances(group.id);
@@ -76,10 +76,9 @@ export default function Groups() {
                 setActiveGroup(group.id);
                 navigate(`/group/${group.id}`);
               }}
-              className="rounded-xl p-4 cursor-pointer hover:opacity-90 transition-all border border-border/50"
-              style={{ backgroundColor: groupColor.bgHex }}
+              className="relative flex flex-col gap-3 p-4 bg-card rounded-xl cursor-pointer hover:opacity-90 transition-all border border-border/50 overflow-hidden"
             >
-              <div className="flex items-start justify-between mb-3">
+              <div className="flex items-start justify-between">
                 <div>
                   <h3 className="font-semibold text-foreground">{group.name}</h3>
                   <p className="text-sm text-muted-foreground">

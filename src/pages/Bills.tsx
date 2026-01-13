@@ -120,7 +120,7 @@ export default function Bills() {
         </Select>
       </div>
 
-      <main className="px-4 space-y-3">
+      <main className="px-4 space-y-2">
         {sortedExpenses.map((expense) => {
           const groupInfo = getGroupInfo(expense);
           
@@ -128,28 +128,38 @@ export default function Bills() {
             <div
               key={expense.id}
               onClick={() => navigate(`/bill/${expense.id}`)}
-              className="flex items-center gap-3 p-4 rounded-xl cursor-pointer hover:opacity-90 transition-all border border-border/50"
-              style={{ backgroundColor: groupInfo.bgHex }}
+              className="relative flex items-center gap-3 p-4 bg-card rounded-xl cursor-pointer hover:opacity-90 transition-all border border-border/50 overflow-hidden"
             >
-              <div className="w-12 h-12 rounded-xl bg-background/60 flex items-center justify-center">
-                {categoryIcons[expense.category] || <Receipt className="w-5 h-5 text-foreground" />}
+              {/* Left color bar */}
+              <div 
+                className="absolute left-0 top-0 bottom-0 w-[2px]"
+                style={{ backgroundColor: groupInfo.hex }}
+              />
+              
+              {/* Icon with colored background */}
+              <div 
+                className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: `${groupInfo.hex}1A` }}
+              >
+                <div style={{ color: `${groupInfo.hex}CC` }}>
+                  {categoryIcons[expense.category] || <Receipt className="w-5 h-5" />}
+                </div>
               </div>
+              
+              {/* Content */}
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-foreground truncate">{expense.description}</p>
+                <p className="font-medium text-foreground truncate">
+                  {expense.description}
+                </p>
                 <p className="text-sm text-muted-foreground">
                   Paid by {getPayerName(expense)} • {formatExpenseDate(expense.date)}
                 </p>
-                <span 
-                  className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-medium"
-                  style={{ 
-                    backgroundColor: `${groupInfo.hex}20`,
-                    color: groupInfo.hex 
-                  }}
-                >
-                  {groupInfo.name}
-                </span>
               </div>
-              <p className="font-semibold text-foreground">{formatCurrency(expense.totalAmount)}</p>
+              
+              {/* Amount */}
+              <p className="font-semibold text-foreground">
+                {formatCurrency(expense.totalAmount)}
+              </p>
             </div>
           );
         })}
