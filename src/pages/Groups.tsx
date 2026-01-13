@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Users, X, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Users, X } from 'lucide-react';
 import { useGroupStore } from '@/stores/groupStore';
 import { useExpenseStore } from '@/stores/expenseStore';
 import { BottomNav } from '@/components/BottomNav';
@@ -15,22 +15,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+
 
 export default function Groups() {
   const navigate = useNavigate();
@@ -42,11 +27,6 @@ export default function Groups() {
   const [newMemberName, setNewMemberName] = useState('');
   const [tempMembers, setTempMembers] = useState<string[]>([]);
   const [showMemberStep, setShowMemberStep] = useState(false);
-
-  // Edit/Delete state
-  const [editingGroup, setEditingGroup] = useState<string | null>(null);
-  const [editGroupName, setEditGroupName] = useState('');
-  const [deletingGroup, setDeletingGroup] = useState<string | null>(null);
 
   const handleCreateGroup = () => {
     if (!newGroupName.trim()) return;
@@ -87,30 +67,6 @@ export default function Groups() {
     setTempMembers([]);
   };
 
-  const handleStartEdit = (group: typeof groups[0], e: React.MouseEvent) => {
-    e.stopPropagation();
-    setEditingGroup(group.id);
-    setEditGroupName(group.name);
-  };
-
-  const handleSaveEdit = () => {
-    if (!editingGroup || !editGroupName.trim()) return;
-    updateGroup(editingGroup, { name: editGroupName.trim() });
-    setEditingGroup(null);
-    setEditGroupName('');
-  };
-
-  const handleConfirmDelete = () => {
-    if (!deletingGroup) return;
-    // Delete all expenses associated with this group first
-    deleteExpensesByGroup(deletingGroup);
-    // Then delete the group
-    deleteGroup(deletingGroup);
-    setDeletingGroup(null);
-  };
-
-  const groupToDelete = groups.find(g => g.id === deletingGroup);
-
   return (
     <div className="min-h-screen bg-background pb-24">
       <header className="px-4 pt-6 pb-4 safe-top">
@@ -142,36 +98,11 @@ export default function Groups() {
                     {group.members.length} members
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground">Total spend</p>
-                    <p className="font-semibold text-foreground">
-                      {formatCurrency(totalSpend, group.currency)}
-                    </p>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-popover">
-                      <DropdownMenuItem onClick={(e) => handleStartEdit(group, e)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeletingGroup(group.id);
-                        }}
-                        className="text-destructive focus:text-destructive"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">Total spend</p>
+                  <p className="font-semibold text-foreground">
+                    {formatCurrency(totalSpend, group.currency)}
+                  </p>
                 </div>
               </div>
 
@@ -323,67 +254,7 @@ export default function Groups() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Group Dialog */}
-      <Dialog open={!!editingGroup} onOpenChange={(open) => !open && setEditingGroup(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit Group</DialogTitle>
-            <DialogDescription>
-              Change the group name
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">
-                Group Name
-              </label>
-              <Input
-                placeholder="Group name"
-                value={editGroupName}
-                onChange={(e) => setEditGroupName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit()}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setEditingGroup(null)}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleSaveEdit} 
-                className="flex-1"
-                disabled={!editGroupName.trim()}
-              >
-                Save
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deletingGroup} onOpenChange={(open) => !open && setDeletingGroup(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Group</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete "{groupToDelete?.name}"? This will also delete all expenses and bills associated with this group. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleConfirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

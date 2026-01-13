@@ -1,23 +1,50 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MoreVertical, ScanLine, Plus, Users, Receipt, UserPlus } from 'lucide-react';
+import { ArrowLeft, MoreVertical, ScanLine, Plus, Users, Receipt, UserPlus, Pencil, Trash2 } from 'lucide-react';
 import { useGroupStore } from '@/stores/groupStore';
 import { useExpenseStore } from '@/stores/expenseStore';
 import { MemberAvatar } from '@/components/MemberAvatar';
 import { ActivityItem } from '@/components/ActivityItem';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { AddExpenseDialog } from '@/components/AddExpenseDialog';
 import { AddMemberDialog } from '@/components/AddMemberDialog';
 import { formatCurrency } from '@/lib/constants';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function GroupDetail() {
   const { groupId } = useParams();
   const navigate = useNavigate();
-  const { groups, setActiveGroup } = useGroupStore();
-  const { getExpensesByGroup, getGroupBalances, getGroupTotalSpend } = useExpenseStore();
+  const { groups, setActiveGroup, updateGroup, deleteGroup } = useGroupStore();
+  const { getExpensesByGroup, getGroupBalances, getGroupTotalSpend, deleteExpensesByGroup } = useExpenseStore();
 
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editGroupName, setEditGroupName] = useState('');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const group = groups.find(g => g.id === groupId);
 
@@ -33,6 +60,27 @@ export default function GroupDetail() {
   const handleScanPaint = () => {
     setActiveGroup(group.id);
     navigate('/scan');
+  };
+
+  const handleStartEdit = () => {
+    setEditGroupName(group.name);
+    setShowEditDialog(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editGroupName.trim()) return;
+    updateGroup(group.id, { name: editGroupName.trim() });
+    setShowEditDialog(false);
+    setEditGroupName('');
+  };
+
+  const handleConfirmDelete = () => {
+    // Delete all expenses associated with this group first
+    deleteExpensesByGroup(group.id);
+    // Then delete the group
+    deleteGroup(group.id);
+    setShowDeleteDialog(false);
+    navigate('/groups');
   };
 
   const expenses = getExpensesByGroup(group.id);
@@ -66,9 +114,26 @@ export default function GroupDetail() {
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <button className="p-2 -mr-2 rounded-lg hover:bg-white/10 transition-colors">
-            <MoreVertical className="w-5 h-5" />
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="p-2 -mr-2 rounded-lg hover:bg-white/10 transition-colors">
+                <MoreVertical className="w-5 h-5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-popover">
+              <DropdownMenuItem onClick={handleStartEdit}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit Group
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => setShowDeleteDialog(true)}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Group
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <h1 className="text-2xl font-bold mb-1">{group.name}</h1>
@@ -260,6 +325,68 @@ export default function GroupDetail() {
         onOpenChange={setShowAddMember}
         group={group}
       />
+
+      {/* Edit Group Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Group</DialogTitle>
+            <DialogDescription>
+              Change the group name
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                Group Name
+              </label>
+              <Input
+                placeholder="Group name"
+                value={editGroupName}
+                onChange={(e) => setEditGroupName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit()}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowEditDialog(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSaveEdit} 
+                className="flex-1"
+                disabled={!editGroupName.trim()}
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Group</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{group.name}"? This will also delete all expenses and bills associated with this group. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
