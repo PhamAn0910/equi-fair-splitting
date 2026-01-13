@@ -38,6 +38,7 @@ interface ExpenseState {
   addExpense: (expense: Omit<Expense, 'id'>) => Expense;
   updateExpense: (expenseId: string, updates: Partial<Expense>) => void;
   deleteExpense: (expenseId: string) => void;
+  deleteExpensesByGroup: (groupId: string) => void;
   getExpensesByGroup: (groupId: string) => Expense[];
   
   // Balance calculations
@@ -119,6 +120,10 @@ export const useExpenseStore = create<ExpenseState>()(
       
       deleteExpense: (expenseId) => set(state => ({
         expenses: state.expenses.filter(e => e.id !== expenseId),
+      })),
+      
+      deleteExpensesByGroup: (groupId) => set(state => ({
+        expenses: state.expenses.filter(e => e.groupId !== groupId),
       })),
       
       getExpensesByGroup: (groupId) => {
