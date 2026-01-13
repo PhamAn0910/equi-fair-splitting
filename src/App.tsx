@@ -11,6 +11,7 @@ import Bills from "./pages/Bills";
 import Settlement from "./pages/Settlement";
 import BillDetail from "./pages/BillDetail";
 import Account from "./pages/Account";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/settle" element={<Settlement />} />
           <Route path="/bill/:billId" element={<BillDetail />} />
           <Route path="/account" element={<Account />} />
+          <Route path="/settings" element={<Settings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

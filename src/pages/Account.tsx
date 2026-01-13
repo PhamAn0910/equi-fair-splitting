@@ -1,13 +1,16 @@
 import { BottomNav } from '@/components/BottomNav';
 import { MemberAvatar } from '@/components/MemberAvatar';
 import { Settings, Bell, CreditCard, HelpCircle, LogOut, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Account() {
+  const navigate = useNavigate();
+  
   const menuItems = [
-    { icon: Settings, label: 'Settings', description: 'App preferences' },
-    { icon: Bell, label: 'Notifications', description: 'Manage alerts' },
-    { icon: CreditCard, label: 'Payment Methods', description: 'Add or remove' },
-    { icon: HelpCircle, label: 'Help & Support', description: 'Get assistance' },
+    { icon: Settings, label: 'Settings', description: 'App preferences', path: '/settings' },
+    { icon: Bell, label: 'Notifications', description: 'Manage alerts', path: null },
+    { icon: CreditCard, label: 'Payment Methods', description: 'Add or remove', path: null },
+    { icon: HelpCircle, label: 'Help & Support', description: 'Get assistance', path: null },
   ];
 
   return (
@@ -23,9 +26,10 @@ export default function Account() {
       </header>
 
       <main className="px-4 space-y-2">
-        {menuItems.map(({ icon: Icon, label, description }) => (
+        {menuItems.map(({ icon: Icon, label, description, path }) => (
           <button
             key={label}
+            onClick={() => path && navigate(path)}
             className="w-full flex items-center gap-4 p-4 bg-card rounded-xl hover:bg-muted transition-colors"
           >
             <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
