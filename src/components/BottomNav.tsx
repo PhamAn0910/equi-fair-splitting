@@ -4,8 +4,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 const navItems = [
   { icon: Home, label: 'Home', path: '/' },
-  { icon: MessageSquare, label: 'Activity', path: '/activity' },
-  { icon: Receipt, label: 'Expenses', path: '/expenses' },
+  { icon: MessageSquare, label: 'Groups', path: '/groups' },
+  { icon: Receipt, label: 'Bills', path: '/bills' },
   { icon: RefreshCw, label: 'Settle', path: '/settle' },
   { icon: User, label: 'Account', path: '/account' },
 ];

@@ -120,7 +120,7 @@ export default function Dashboard() {
             <h2 className="text-lg font-semibold text-foreground">Active Trip</h2>
             {hasGroups && (
               <button 
-                onClick={() => navigate('/expenses')}
+                onClick={() => navigate('/groups')}
                 className="text-sm text-accent font-medium hover:underline"
               >
                 View All
