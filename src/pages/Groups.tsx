@@ -5,7 +5,7 @@ import { useGroupStore } from '@/stores/groupStore';
 import { useExpenseStore } from '@/stores/expenseStore';
 import { BottomNav } from '@/components/BottomNav';
 import { MemberAvatar } from '@/components/MemberAvatar';
-import { formatCurrency } from '@/lib/constants';
+import { formatCurrency, getGroupColor } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -67,6 +67,7 @@ export default function Groups() {
           const balances = getGroupBalances(group.id);
           const admin = group.members.find(m => m.isAdmin);
           const yourBalance = admin ? balances[admin.id] || 0 : 0;
+          const groupColor = getGroupColor(group.colorIndex ?? 0);
 
           return (
             <div
@@ -75,7 +76,8 @@ export default function Groups() {
                 setActiveGroup(group.id);
                 navigate(`/group/${group.id}`);
               }}
-              className="bg-card rounded-xl p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+              className="rounded-xl p-4 cursor-pointer hover:opacity-90 transition-all border border-border/50"
+              style={{ backgroundColor: groupColor.bgHex }}
             >
               <div className="flex items-start justify-between mb-3">
                 <div>

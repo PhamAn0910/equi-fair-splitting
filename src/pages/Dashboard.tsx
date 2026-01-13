@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ScanLine, BarChart3, Filter, Plus, X } from 'lucide-react';
+import { ScanLine, BarChart3, Filter, Plus, X } from 'lucide-react';
 import { useGroupStore } from '@/stores/groupStore';
 import { useExpenseStore } from '@/stores/expenseStore';
 import { BalanceCard } from '@/components/BalanceCard';
@@ -90,8 +90,8 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <header className="px-4 pt-4 pb-2 safe-top">
-        <div className="flex items-center justify-between mb-4">
+      <header className="px-4 pt-4 pb-4 safe-top">
+        <div className="flex items-center justify-between">
           <div>
             <p className="text-muted-foreground text-sm">Welcome back,</p>
             <h1 className="text-2xl font-bold text-foreground">Shinomiya!</h1>
@@ -100,15 +100,6 @@ export default function Dashboard() {
             name="You"
             colorHex="#6B7B5F"
             size="lg"
-          />
-        </div>
-
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search groups or friends..."
-            className="pl-10 bg-card border-border"
           />
         </div>
       </header>
