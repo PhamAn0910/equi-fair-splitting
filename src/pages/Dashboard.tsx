@@ -26,7 +26,8 @@ export default function Dashboard() {
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [newMemberName, setNewMemberName] = useState('');
-  const [createdGroup, setCreatedGroup] = useState<string | null>(null);
+  const [tempMembers, setTempMembers] = useState<string[]>([]);
+  const [showMemberStep, setShowMemberStep] = useState(false);
 
   const activeGroup = getActiveGroup();
   const hasGroups = groups.length > 0;
@@ -60,32 +61,42 @@ export default function Dashboard() {
 
   const handleCreateGroup = () => {
     if (!newGroupName.trim()) return;
-    const group = createGroup(newGroupName.trim());
-    setCreatedGroup(group.id);
-    setNewGroupName('');
+    // Don't create the group yet, just move to member step
+    setShowMemberStep(true);
   };
 
   const handleAddMember = () => {
-    if (!newMemberName.trim() || !createdGroup) return;
-    addMember(createdGroup, newMemberName.trim());
+    if (!newMemberName.trim()) return;
+    setTempMembers([...tempMembers, newMemberName.trim()]);
     setNewMemberName('');
   };
 
-  const handleRemoveMember = (memberId: string) => {
-    if (!createdGroup) return;
-    removeMember(createdGroup, memberId);
+  const handleRemoveMember = (index: number) => {
+    setTempMembers(tempMembers.filter((_, i) => i !== index));
   };
 
   const handleFinishSetup = () => {
-    setShowCreateGroup(false);
-    if (createdGroup) {
-      setActiveGroup(createdGroup);
-      navigate(`/group/${createdGroup}`);
-    }
-    setCreatedGroup(null);
+    // Only create the group when user clicks "Start Splitting"
+    if (!newGroupName.trim()) return;
+    const group = createGroup(newGroupName.trim());
+    // Add all temporary members
+    tempMembers.forEach(memberName => {
+      addMember(group.id, memberName);
+    });
+    // Navigate to the group
+    setActiveGroup(group.id);
+    navigate(`/group/${group.id}`);
+    // Clean up state
+    handleCloseDialog();
   };
 
-  const currentCreatingGroup = groups.find(g => g.id === createdGroup);
+  const handleCloseDialog = () => {
+    setShowCreateGroup(false);
+    setShowMemberStep(false);
+    setNewGroupName('');
+    setNewMemberName('');
+    setTempMembers([]);
+  };
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -195,15 +206,15 @@ export default function Dashboard() {
       <BottomNav />
 
       {/* Create Group Dialog */}
-      <Dialog open={showCreateGroup} onOpenChange={setShowCreateGroup}>
+      <Dialog open={showCreateGroup} onOpenChange={(open) => !open && handleCloseDialog()}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {createdGroup ? 'Add Members' : 'Create New Group'}
+              {showMemberStep ? 'Add Members' : 'Create New Group'}
             </DialogTitle>
           </DialogHeader>
 
-          {!createdGroup ? (
+          {!showMemberStep ? (
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
@@ -221,7 +232,7 @@ export default function Dashboard() {
                 className="w-full"
                 disabled={!newGroupName.trim()}
               >
-                Create Group
+                Next
               </Button>
             </div>
           ) : (
@@ -229,31 +240,33 @@ export default function Dashboard() {
               {/* Current members */}
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
-                  Members ({currentCreatingGroup?.members.length || 0})
+                  Members ({tempMembers.length + 1})
                 </label>
                 <div className="space-y-2">
-                  {currentCreatingGroup?.members.map((member) => (
+                  {/* Show organizer (You) */}
+                  <div className="flex items-center gap-3 bg-muted/50 px-3 py-2 rounded-xl">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white bg-orange-500">
+                      YO
+                    </div>
+                    <span className="flex-1 font-medium">You</span>
+                    <span className="text-xs text-muted-foreground">Organizer</span>
+                  </div>
+                  {/* Show temporary members */}
+                  {tempMembers.map((memberName, index) => (
                     <div
-                      key={member.id}
+                      key={index}
                       className="flex items-center gap-3 bg-muted/50 px-3 py-2 rounded-xl"
                     >
-                      <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white"
-                        style={{ backgroundColor: member.colorHex }}
-                      >
-                        {member.name.slice(0, 2).toUpperCase()}
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white bg-blue-500">
+                        {memberName.slice(0, 2).toUpperCase()}
                       </div>
-                      <span className="flex-1 font-medium">{member.name}</span>
-                      {member.isAdmin ? (
-                        <span className="text-xs text-muted-foreground">Organizer</span>
-                      ) : (
-                        <button 
-                          onClick={() => handleRemoveMember(member.id)}
-                          className="text-muted-foreground hover:text-destructive transition-colors"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      )}
+                      <span className="flex-1 font-medium">{memberName}</span>
+                      <button 
+                        onClick={() => handleRemoveMember(index)}
+                        className="text-muted-foreground hover:text-destructive transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
                   ))}
                 </div>
