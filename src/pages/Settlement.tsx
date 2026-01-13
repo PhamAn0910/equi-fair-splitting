@@ -229,12 +229,6 @@ export default function Settlement() {
             <h2 className="text-lg font-semibold text-foreground">
               Pending Settlements
             </h2>
-            {pendingCards.length > 3 && (
-              <button className="flex items-center gap-1 text-sm text-primary font-medium hover:underline">
-                View All
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            )}
           </div>
           
           {pendingCards.length > 0 ? (

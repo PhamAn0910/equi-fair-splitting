@@ -162,8 +162,11 @@ export default function Dashboard() {
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold text-foreground">Recent Activity</h2>
-            <button className="p-2 rounded-lg hover:bg-muted transition-colors">
-              <Filter className="w-4 h-4 text-muted-foreground" />
+            <button 
+              onClick={() => navigate('/bills')}
+              className="text-sm text-accent font-medium hover:underline"
+            >
+              View All
             </button>
           </div>
 
