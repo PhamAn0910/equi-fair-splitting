@@ -79,20 +79,29 @@ export default function GroupDetail() {
         {/* Member Row */}
         <div className="flex items-center gap-3 overflow-x-auto pb-2">
           {group.members.map((member) => (
-            <MemberAvatar
-              key={member.id}
-              name={member.name}
-              colorHex={member.colorHex}
-              size="lg"
-              showName
-            />
+            <div key={member.id} className="flex flex-col items-center gap-1 flex-shrink-0">
+              <div className="p-1">
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-base font-semibold text-white"
+                  style={{ backgroundColor: member.colorHex }}
+                >
+                  {member.name.slice(0, 2).toUpperCase()}
+                </div>
+              </div>
+              <span className="text-xs font-medium text-primary-foreground truncate max-w-[60px]">
+                {member.name}
+              </span>
+            </div>
           ))}
-          <button 
-            onClick={() => setShowAddMember(true)}
-            className="flex-shrink-0 w-12 h-12 rounded-full border-2 border-dashed border-primary-foreground/30 flex items-center justify-center text-primary-foreground/50 hover:border-primary-foreground hover:text-primary-foreground transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-          </button>
+          <div className="flex flex-col items-center gap-1 flex-shrink-0">
+            <button 
+              onClick={() => setShowAddMember(true)}
+              className="w-12 h-12 rounded-full border-2 border-dashed border-primary-foreground/30 flex items-center justify-center text-primary-foreground/50 hover:border-primary-foreground hover:text-primary-foreground transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+            <span className="text-xs text-primary-foreground/70">&nbsp;</span>
+          </div>
         </div>
       </header>
 
