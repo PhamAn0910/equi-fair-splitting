@@ -88,10 +88,16 @@ export function SettlementCard({
 
         {/* Amount and status */}
         <div className="flex flex-col items-end">
-          <p className={cn(
-            'font-semibold',
-            isSettled ? 'text-muted-foreground' : isYouOwing ? 'text-destructive' : 'text-success'
-          )}>
+          <p 
+            className="font-semibold"
+            style={{
+              color: isSettled 
+                ? undefined
+                : isYouOwing 
+                  ? 'rgb(231, 110, 80)' 
+                  : '#7b8763'
+            }}
+          >
             {currency}{amount.toFixed(2)}
           </p>
           {isSettled ? (

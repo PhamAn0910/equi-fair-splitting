@@ -55,14 +55,16 @@ export function ActivityItem({
       
       {/* Amount */}
       <div className="text-right flex-shrink-0">
-        <p className={cn(
-          'font-semibold',
-          isOwed === undefined 
-            ? 'text-foreground'
-            : isOwed 
-            ? 'text-destructive' 
-            : 'text-success'
-        )}>
+        <p 
+          className="font-semibold"
+          style={{
+            color: isOwed === undefined 
+              ? undefined
+              : isOwed 
+                ? 'rgb(231, 110, 80)' 
+                : '#7b8763'
+          }}
+        >
           {isOwed === undefined ? '' : isOwed ? '-' : '+'}
           {formatCurrency(amount, currency)}
         </p>

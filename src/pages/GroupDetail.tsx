@@ -107,7 +107,10 @@ export default function GroupDetail() {
           </div>
           <div className="bg-card rounded-xl p-4 shadow-card">
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Your Balance</p>
-            <p className={`text-xl font-bold ${yourBalance >= 0 ? 'text-success' : 'text-destructive'}`}>
+            <p 
+              className="text-xl font-bold"
+              style={{ color: yourBalance >= 0 ? '#7b8763' : 'rgb(231, 110, 80)' }}
+            >
               {yourBalance >= 0 ? '+' : ''}{formatCurrency(yourBalance, group.currency)}
             </p>
           </div>
@@ -216,13 +219,16 @@ export default function GroupDetail() {
                       }
                     </p>
                   </div>
-                  <p className={`font-semibold ${
-                    balance === 0 
-                      ? 'text-muted-foreground' 
-                      : isPositive 
-                        ? 'text-success' 
-                        : 'text-destructive'
-                  }`}>
+                  <p 
+                    className="font-semibold"
+                    style={{
+                      color: balance === 0 
+                        ? undefined
+                        : isPositive 
+                          ? '#7b8763' 
+                          : 'rgb(231, 110, 80)'
+                    }}
+                  >
                     {balance === 0 ? '-' : `${isPositive ? '+' : ''}${formatCurrency(balance, group.currency)}`}
                   </p>
                 </div>

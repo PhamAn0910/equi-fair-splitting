@@ -51,10 +51,10 @@ export function BalanceCard({
           <span className="text-3xl font-bold text-primary-foreground">
             {formatCurrency(Math.abs(yourBalance), currency)}
           </span>
-          <span className={cn(
-            'text-sm font-medium',
-            isPositive ? 'text-green-300' : 'text-red-300'
-          )}>
+          <span 
+            className="text-sm font-medium"
+            style={{ color: isPositive ? '#7b8763' : 'rgb(231, 110, 80)' }}
+          >
             {isPositive ? 'You are owed' : 'You owe'}
           </span>
         </div>

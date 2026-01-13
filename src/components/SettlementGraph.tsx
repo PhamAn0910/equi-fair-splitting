@@ -139,13 +139,11 @@ export function SettlementGraph({ nodes, edges }: SettlementGraphProps) {
             {/* Balance badge */}
             {node.balance !== 0 && (
               <div
-                className={`absolute -top-1 -right-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold z-10 whitespace-nowrap ${
-                  isPositive 
-                    ? 'bg-success/10 text-success' 
-                    : 'bg-destructive/10 text-destructive'
-                }`}
+                className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold z-10 whitespace-nowrap"
                 style={{
                   transform: 'translate(40%, -50%)',
+                  backgroundColor: isPositive ? '#7b87631A' : 'rgba(231, 110, 80, 0.1)',
+                  color: isPositive ? '#7b8763' : 'rgb(231, 110, 80)'
                 }}
               >
                 {isPositive ? '+' : ''}{Math.abs(node.balance).toFixed(2)}
