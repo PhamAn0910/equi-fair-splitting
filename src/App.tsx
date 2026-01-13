@@ -6,8 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import ScanPaint from "./pages/ScanPaint";
 import GroupDetail from "./pages/GroupDetail";
-import Activity from "./pages/Activity";
-import Expenses from "./pages/Expenses";
+import Groups from "./pages/Groups";
+import Bills from "./pages/Bills";
 import Settlement from "./pages/Settlement";
 import BillDetail from "./pages/BillDetail";
 import Account from "./pages/Account";
@@ -25,8 +25,8 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/scan" element={<ScanPaint />} />
           <Route path="/group/:groupId" element={<GroupDetail />} />
-          <Route path="/activity" element={<Activity />} />
-          <Route path="/expenses" element={<Expenses />} />
+          <Route path="/groups" element={<Groups />} />
+          <Route path="/bills" element={<Bills />} />
           <Route path="/settle" element={<Settlement />} />
           <Route path="/bill/:billId" element={<BillDetail />} />
           <Route path="/account" element={<Account />} />

@@ -149,7 +149,10 @@ export default function GroupDetail() {
             <h2 className="text-lg font-semibold text-foreground">
               Expenses ({expenses.length})
             </h2>
-            <button className="text-sm text-accent font-medium hover:underline">
+            <button 
+              onClick={() => navigate('/bills')}
+              className="text-sm text-accent font-medium hover:underline"
+            >
               View All
             </button>
           </div>
