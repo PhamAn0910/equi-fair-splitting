@@ -12,6 +12,23 @@ export const MEMBER_COLORS = [
 
 export type MemberColor = typeof MEMBER_COLORS[number];
 
+// Group background colors - pale versions of the provided palette
+export const GROUP_COLORS = [
+  { name: 'sage', hex: '#A3B565', bgHex: 'rgba(163, 181, 101, 0.15)' },
+  { name: 'lavender', hex: '#C4C3E3', bgHex: 'rgba(196, 195, 227, 0.25)' },
+  { name: 'mint', hex: '#CFE0B4', bgHex: 'rgba(207, 224, 180, 0.25)' },
+  { name: 'periwinkle', hex: '#B7B6DD', bgHex: 'rgba(183, 182, 221, 0.25)' },
+  { name: 'apricot', hex: '#FCDD9D', bgHex: 'rgba(252, 221, 157, 0.25)' },
+  { name: 'olive', hex: '#8FA05A', bgHex: 'rgba(143, 160, 90, 0.15)' },
+  { name: 'orange', hex: '#F1642E', bgHex: 'rgba(241, 100, 46, 0.12)' },
+] as const;
+
+export type GroupColor = typeof GROUP_COLORS[number];
+
+export function getGroupColor(colorIndex: number): GroupColor {
+  return GROUP_COLORS[colorIndex % GROUP_COLORS.length];
+}
+
 // Get the next available color for a new member
 export function getNextColor(usedColors: string[]): MemberColor {
   const available = MEMBER_COLORS.find(c => !usedColors.includes(c.name));

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { MEMBER_COLORS, getNextColor } from '@/lib/constants';
+import { MEMBER_COLORS, getNextColor, GROUP_COLORS } from '@/lib/constants';
 
 export interface GroupMember {
   id: string;
@@ -18,6 +18,7 @@ export interface Group {
   createdAt: string;
   totalSpend: number;
   yourBalance: number;
+  colorIndex: number; // Index into GROUP_COLORS for unique group background
 }
 
 interface GroupState {
@@ -43,6 +44,7 @@ export const useGroupStore = create<GroupState>()(
       activeGroupId: null,
       
       createGroup: (name, currency = 'EUR', adminName = 'You') => {
+        const state = get();
         const firstColor = MEMBER_COLORS[0];
         const adminMember: GroupMember = {
           id: crypto.randomUUID(),
@@ -52,6 +54,9 @@ export const useGroupStore = create<GroupState>()(
           isAdmin: true,
         };
         
+        // Assign next color index based on existing group count
+        const colorIndex = state.groups.length % GROUP_COLORS.length;
+        
         const newGroup: Group = {
           id: crypto.randomUUID(),
           name,
@@ -60,12 +65,13 @@ export const useGroupStore = create<GroupState>()(
           createdAt: new Date().toISOString(),
           totalSpend: 0,
           yourBalance: 0,
+          colorIndex,
         };
         
-        set((state) => ({
+        set({
           groups: [...state.groups, newGroup],
           activeGroupId: newGroup.id,
-        }));
+        });
         
         return newGroup;
       },

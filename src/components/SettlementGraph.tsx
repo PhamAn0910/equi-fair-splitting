@@ -63,8 +63,8 @@ export function SettlementGraph({ nodes, edges }: SettlementGraphProps) {
   return (
     <div 
       ref={containerRef}
-      className="relative w-full bg-card rounded-2xl overflow-hidden"
-      style={{ height: dimensions.height }}
+      className="relative w-full bg-card rounded-2xl p-4"
+      style={{ height: dimensions.height + 32 }}
     >
       <svg 
         width={dimensions.width} 
