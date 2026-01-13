@@ -1,5 +1,6 @@
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, Edit } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { useExpenseStore } from '@/stores/expenseStore';
 import { useGroupStore } from '@/stores/groupStore';
 import { MemberAvatar } from '@/components/MemberAvatar';
@@ -7,6 +8,16 @@ import { formatCurrency } from '@/lib/constants';
 import { BottomNav } from '@/components/BottomNav';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Category icons mapping
 const categoryIcons: Record<string, string> = {
@@ -22,8 +33,10 @@ const categoryIcons: Record<string, string> = {
 export default function BillDetail() {
   const { billId } = useParams();
   const navigate = useNavigate();
-  const { expenses, getExpensesByGroup } = useExpenseStore();
+  const { expenses, getExpensesByGroup, deleteExpense } = useExpenseStore();
   const { groups } = useGroupStore();
+
+  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
 
   const expense = expenses.find(e => e.id === billId);
 
@@ -55,6 +68,18 @@ export default function BillDetail() {
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays} days ago`;
     return date.toLocaleDateString();
+  };
+
+  const handleConfirmDelete = () => {
+    if (!billId) return;
+    deleteExpense(billId);
+    setShowDeleteDialog(false);
+    // Navigate back to group detail or bills page
+    if (group) {
+      navigate(`/group/${group.id}`);
+    } else {
+      navigate('/bills');
+    }
   };
 
   const categoryIcon = categoryIcons[expense.category] || '📦';
@@ -92,8 +117,11 @@ export default function BillDetail() {
             </button>
           </div>
 
-          <button className="text-sm font-medium text-primary hover:underline">
-            Edit
+          <button 
+            onClick={() => setShowDeleteDialog(true)}
+            className="text-sm font-medium text-destructive hover:underline"
+          >
+            Delete
           </button>
         </div>
       </header>
@@ -215,6 +243,27 @@ export default function BillDetail() {
           Settle Up
         </Button>
       </main>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Bill</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{expense.description}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <BottomNav />
     </div>
