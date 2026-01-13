@@ -27,6 +27,7 @@ interface GroupState {
   
   // Actions
   createGroup: (name: string, currency?: string, adminName?: string) => Group;
+  updateGroup: (groupId: string, updates: Partial<Pick<Group, 'name' | 'currency'>>) => void;
   deleteGroup: (groupId: string) => void;
   setActiveGroup: (groupId: string | null) => void;
   getActiveGroup: () => Group | undefined;
@@ -75,6 +76,12 @@ export const useGroupStore = create<GroupState>()(
         
         return newGroup;
       },
+      
+      updateGroup: (groupId, updates) => set((state) => ({
+        groups: state.groups.map(g => 
+          g.id === groupId ? { ...g, ...updates } : g
+        ),
+      })),
       
       deleteGroup: (groupId) => set((state) => ({
         groups: state.groups.filter(g => g.id !== groupId),
