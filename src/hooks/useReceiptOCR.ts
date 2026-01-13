@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { ExpenseItem, ExpenseFees } from '@/stores/paintStore';
 
@@ -40,20 +39,114 @@ export function useReceiptOCR(): UseReceiptOCRResult {
 
       console.log('Sending receipt to AI for parsing...');
 
-      const { data, error: fnError } = await supabase.functions.invoke('parse-receipt', {
-        body: { imageBase64: base64 }
-      });
-
-      if (fnError) {
-        console.error('Function error:', fnError);
-        throw new Error(fnError.message || 'Failed to parse receipt');
+      const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!GEMINI_API_KEY) {
+        throw new Error('VITE_GEMINI_API_KEY is not configured. Get your API key from https://aistudio.google.com/app/apikey');
       }
 
-      if (data?.error) {
-        throw new Error(data.error);
+      // Extract base64 data (remove data URL prefix if present)
+      const base64Data = base64.includes(',') ? base64.split(',')[1] : base64;
+
+      // Call Google Gemini API directly (using gemini-2.5-flash-image for optimal OCR)
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: `You are an expert receipt/invoice parser. Your job is to extract data from this receipt image.
+
+STEP 1: Identify the SUBTOTAL line (the sum of all items BEFORE tax/fees)
+STEP 2: Identify Tax, Service Charge, Tip, and Discount lines SEPARATELY
+STEP 3: Extract each purchasable item
+
+CRITICAL RULES:
+1. For item pricing: If there are "PRICE" and "SUBTOTAL/AMOUNT/TOTAL" columns, use the line-item SUBTOTAL (not unit price). Calculate unit_price = line_subtotal / quantity.
+2. DO NOT include Tax, VAT, GST, Service Charge, Tip, or Discount as "items" - return them in "fees" instead.
+3. DO NOT include the Grand Total or Subtotal summary row as an item.
+
+WHAT TO RETURN:
+- items: Array of purchasable items (name, price per unit, quantity)
+- fees: Object with tax, tip, service_charge, discount amounts (use 0 if not present)
+- subtotal: The bill subtotal BEFORE fees (sum of all item prices × quantities)
+
+Example output structure:
+{
+  "items": [{"name": "Burger", "price": 12.50, "quantity": 1}],
+  "fees": {"tax": 2.50, "tip": 0, "service_charge": 0, "discount": 0},
+  "subtotal": 45.00
+}
+
+Respond ONLY with a valid JSON object matching this structure.`
+                  },
+                  {
+                    inline_data: {
+                      mime_type: 'image/jpeg',
+                      data: base64Data
+                    }
+                  }
+                ]
+              }
+            ],
+            generationConfig: {
+              temperature: 0.1,
+              maxOutputTokens: 2048,
+              responseMimeType: 'application/json'
+            }
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Gemini API error:', response.status, errorData);
+        
+        if (response.status === 429) {
+          throw new Error('Rate limit exceeded. Please try again later.');
+        }
+        if (response.status === 403) {
+          throw new Error('Invalid API key. Check your VITE_GEMINI_API_KEY in .env file.');
+        }
+        throw new Error(errorData?.error?.message || 'Failed to parse receipt');
       }
 
-      const rawItems = data?.items || [];
+      const data = await response.json();
+      console.log('Gemini Response:', JSON.stringify(data, null, 2));
+
+      // Extract content from Gemini response
+      let result = {
+        items: [] as Array<{ name: string; price: number; quantity: number }>,
+        fees: { tax: 0, tip: 0, service_charge: 0, discount: 0 },
+        subtotal: 0
+      };
+
+      const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (textContent) {
+        try {
+          const parsed = JSON.parse(textContent);
+          result.items = parsed.items || [];
+          result.fees = {
+            tax: parsed.fees?.tax || 0,
+            tip: parsed.fees?.tip || 0,
+            service_charge: parsed.fees?.service_charge || 0,
+            discount: parsed.fees?.discount || 0
+          };
+          result.subtotal = parsed.subtotal || result.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        } catch (e) {
+          console.error('Failed to parse Gemini response:', e);
+          throw new Error('Invalid response format from AI');
+        }
+      } else {
+        throw new Error('No content received from AI');
+      }
+
+      const rawItems = result.items;
       
       // Add unique IDs to each item
       const items: ExpenseItem[] = rawItems.map((item: any, index: number) => ({
@@ -65,13 +158,13 @@ export function useReceiptOCR(): UseReceiptOCRResult {
 
       // Extract fees
       const fees: ExpenseFees = {
-        tax: data?.fees?.tax || 0,
-        tip: data?.fees?.tip || 0,
-        service_charge: data?.fees?.service_charge || 0,
-        discount: data?.fees?.discount || 0,
+        tax: result.fees.tax || 0,
+        tip: result.fees.tip || 0,
+        service_charge: result.fees.service_charge || 0,
+        discount: result.fees.discount || 0,
       };
 
-      const subtotal = data?.subtotal || items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const subtotal = result.subtotal || items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
       console.log('Parsed receipt data:', { items, fees, subtotal });
       
