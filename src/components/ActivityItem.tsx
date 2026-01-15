@@ -62,7 +62,7 @@ export function ActivityItem({
               ? undefined
               : isOwed 
                 ? 'rgb(231, 110, 80)' 
-                : '#7b8763'
+                : '#3b761f'
           }}
         >
           {isOwed === undefined ? '' : isOwed ? '-' : '+'}

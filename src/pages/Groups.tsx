@@ -124,7 +124,7 @@ export default function Groups() {
                 </div>
                 <p 
                   className="text-sm font-medium"
-                  style={{ color: yourBalance === 0 ? undefined : yourBalance >= 0 ? '#7b8763' : 'rgb(231, 110, 80)' }}
+                  style={{ color: yourBalance === 0 ? undefined : yourBalance >= 0 ? '#3b761f' : 'rgb(231, 110, 80)' }}
                 >
                   {yourBalance === 0 ? 'Settled' : `${yourBalance >= 0 ? '+' : ''}${formatCurrency(yourBalance, group.currency)}`}
                 </p>

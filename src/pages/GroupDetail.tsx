@@ -183,7 +183,7 @@ export default function GroupDetail() {
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Your Balance</p>
             <p 
               className="text-xl font-bold"
-              style={{ color: yourBalance >= 0 ? '#7b8763' : 'rgb(231, 110, 80)' }}
+              style={{ color: yourBalance >= 0 ? '#3b761f' : 'rgb(231, 110, 80)' }}
             >
               {yourBalance >= 0 ? '+' : ''}{formatCurrency(yourBalance, group.currency)}
             </p>
@@ -299,7 +299,7 @@ export default function GroupDetail() {
                       color: balance === 0 
                         ? undefined
                         : isPositive 
-                          ? '#7b8763' 
+                          ? '#3b761f' 
                           : 'rgb(231, 110, 80)'
                     }}
                   >

@@ -95,7 +95,7 @@ export function SettlementCard({
                 ? undefined
                 : isYouOwing 
                   ? 'rgb(231, 110, 80)' 
-                  : '#7b8763'
+                  : '#3b761f'
             }}
           >
             {currency}{amount.toFixed(2)}

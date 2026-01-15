@@ -53,7 +53,7 @@ export function BalanceCard({
           </span>
           <span 
             className="text-sm font-medium"
-            style={{ color: isPositive ? '#7b8763' : 'rgb(231, 110, 80)' }}
+            style={{ color: isPositive ? 'hsl(82, 46%, 69%)' : 'rgb(255, 149, 122)' }}
           >
             {isPositive ? 'You are owed' : 'You owe'}
           </span>
