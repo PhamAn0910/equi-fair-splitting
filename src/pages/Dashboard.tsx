@@ -4,7 +4,6 @@ import { ScanLine, BarChart3, Filter, Plus, X } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { useGroupStore } from '@/stores/groupStore';
 import { useExpenseStore } from '@/stores/expenseStore';
-import { useSyncManager } from '@/hooks/useSyncManager';
 import { BalanceCard } from '@/components/BalanceCard';
 import { QuickActionButton } from '@/components/QuickActionButton';
 import { ActivityItem } from '@/components/ActivityItem';
@@ -23,9 +22,6 @@ import {
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useUser();
-  
-  // Initialize sync manager - this will sync local/cloud data
-  useSyncManager();
   
   const { groups, createGroup, addMember, removeMember, getActiveGroup, setActiveGroup } = useGroupStore();
   const { expenses, getGroupBalances, getGroupTotalSpend } = useExpenseStore();
