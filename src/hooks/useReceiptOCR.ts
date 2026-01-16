@@ -168,8 +168,11 @@ Respond ONLY with a valid JSON object matching this structure.`;
 
         console.log('Using Gemini 2.5 Flash Image...');
 
+        // Get actual MIME type from file
+        const mimeType = file.type || 'image/jpeg';
+
         const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${GEMINI_API_KEY}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
           {
             method: 'POST',
             headers: {
@@ -184,7 +187,7 @@ Respond ONLY with a valid JSON object matching this structure.`;
                     },
                     {
                       inline_data: {
-                        mime_type: 'image/jpeg',
+                        mime_type: mimeType, // was hardcoded 'image/jpeg'
                         data: base64Data
                       }
                     }
