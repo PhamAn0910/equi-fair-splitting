@@ -22,7 +22,7 @@ export function AddMemberDialog({ open, onOpenChange, group }: AddMemberDialogPr
 
   const handleAddMember = () => {
     if (!newMemberName.trim()) return;
-    addMember(group.id, newMemberName.trim());
+    addMember(group.id, { name: newMemberName.trim() });
     setNewMemberName('');
   };
 

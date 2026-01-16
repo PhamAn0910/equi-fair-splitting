@@ -44,14 +44,15 @@ export default function Groups() {
     setTempMembers(tempMembers.filter((_, i) => i !== index));
   };
 
-  const handleFinishSetup = () => {
+  const handleFinishSetup = async () => {
     // Only create the group when user clicks "Start Splitting"
     if (!newGroupName.trim()) return;
-    const group = createGroup(newGroupName.trim());
+    const group = await createGroup(newGroupName.trim());
+    if (!group) return;
     // Add all temporary members
-    tempMembers.forEach(memberName => {
-      addMember(group.id, memberName);
-    });
+    for (const memberName of tempMembers) {
+      await addMember(group.id, { name: memberName });
+    }
     // Navigate to the group
     setActiveGroup(group.id);
     navigate(`/group/${group.id}`);
