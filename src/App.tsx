@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import ScanPaint from "./pages/ScanPaint";
 import GroupDetail from "./pages/GroupDetail";
@@ -23,16 +24,22 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          {/* Public Routes */}
           <Route path="/" element={<Index />} />
           <Route path="/scan" element={<ScanPaint />} />
-          <Route path="/group/:groupId" element={<GroupDetail />} />
-          <Route path="/groups" element={<Groups />} />
-          <Route path="/bills" element={<Bills />} />
-          <Route path="/settle" element={<Settlement />} />
-          <Route path="/bill/:billId" element={<BillDetail />} />
-          <Route path="/account" element={<Account />} />
-          <Route path="/settings" element={<Settings />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          
+          {/* Protected Routes - Require Authentication */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/group/:groupId" element={<GroupDetail />} />
+            <Route path="/groups" element={<Groups />} />
+            <Route path="/bills" element={<Bills />} />
+            <Route path="/settle" element={<Settlement />} />
+            <Route path="/bill/:billId" element={<BillDetail />} />
+            <Route path="/account" element={<Account />} />
+            <Route path="/settings" element={<Settings />} />
+          </Route>
+          
+          {/* Catch-all */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

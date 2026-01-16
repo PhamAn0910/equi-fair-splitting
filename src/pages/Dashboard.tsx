@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ScanLine, BarChart3, Filter, Plus, X } from 'lucide-react';
+import { useUser } from '@clerk/clerk-react';
 import { useGroupStore } from '@/stores/groupStore';
 import { useExpenseStore } from '@/stores/expenseStore';
 import { BalanceCard } from '@/components/BalanceCard';
@@ -20,6 +21,7 @@ import {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useUser();
   const { groups, createGroup, addMember, removeMember, getActiveGroup, setActiveGroup } = useGroupStore();
   const { expenses, getGroupBalances, getGroupTotalSpend } = useExpenseStore();
   
@@ -105,13 +107,24 @@ export default function Dashboard() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-muted-foreground text-sm">Welcome back,</p>
-            <h1 className="text-2xl font-bold text-foreground">Shinomiya!</h1>
+            <h1 className="text-2xl font-bold text-foreground">
+              {user?.firstName || user?.username || 'there'}!
+            </h1>
           </div>
-          <MemberAvatar
-            name="You"
-            colorHex="#6B7B5F"
-            size="lg"
-          />
+          {user?.imageUrl ? (
+            <img 
+              src={user.imageUrl} 
+              alt={user.firstName || 'User'} 
+              className="w-12 h-12 rounded-full object-cover cursor-pointer"
+              onClick={() => navigate('/account')}
+            />
+          ) : (
+            <MemberAvatar
+              name={user?.firstName || 'You'}
+              colorHex="#6B7B5F"
+              size="lg"
+            />
+          )}
         </div>
       </header>
 
