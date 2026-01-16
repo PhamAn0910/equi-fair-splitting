@@ -1,73 +1,152 @@
-# Welcome to your Lovable project
+# BillPaint 🎨
 
-## Project info
+A modern, intuitive expense-splitting web application that makes managing shared expenses effortless. Split bills, track balances, and settle up with friends using a beautiful, mobile-first interface.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## ✨ Features
 
-## How can I edit this code?
+### Group Management
+- **Create & Manage Groups**: Organize expenses by trip, event, or household
+- **Member Management**: Add/remove members with colorful avatars
+- **Active Group Selection**: Quickly switch between different expense groups
+- **Group Overview**: View total spending and balances at a glance
 
-There are several ways of editing your application.
+### Expense Tracking
+- **Smart Receipt Scanning**: AI-powered OCR to extract items and amounts from receipt photos
+- **Multiple Split Methods**:
+  - Equal split across members
+  - Custom shares/ratios
+  - Percentage-based splits
+  - Exact amount allocation
+- **Flexible Item Assignment**: Paint-style interface to assign receipt items to members
+- **Category Organization**: Categorize expenses (food, transport, drinks, shopping, entertainment, accommodation)
+- **Detailed Expense History**: Track who paid, when, and for what
 
-**Use Lovable**
+### Settlement & Balances
+- **Real-time Balance Calculation**: Always know who owes what
+- **Optimized Settlement Algorithm**: Minimizes the number of transactions needed
+- **Visual Settlement Graph**: Interactive network graph showing payment relationships
+- **Settlement Tracking**: Mark payments as complete
+- **Balance Dashboard**: Clear overview of all your group balances
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+### User Experience
+- **Mobile-First Design**: Optimized for touch and mobile screens
+- **Warm, Earthy Theme**: Beautiful color palette with member color coding
+- **Bottom Navigation**: Easy access to all main features
+- **Responsive Layout**: Works seamlessly on all device sizes
+- **Real-time Updates**: Instant feedback on all actions
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🛠 Tech Stack
 
-**Use your preferred IDE**
+### Frontend Framework
+- **React 18** - Modern React with hooks
+- **TypeScript** - Type-safe development
+- **Vite** - Lightning-fast build tool and dev server
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Styling & UI
+- **TailwindCSS** - Utility-first CSS framework
+- **shadcn/ui** - High-quality, accessible component library
+- **Lucide React** - Beautiful icon set
+- **Custom Design System** - Warm, earthy color palette with member color coding
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### State Management
+- **Zustand** - Lightweight, flexible state management
+- **Zustand Persist** - Local storage persistence for offline-first experience
 
-Follow these steps:
+### Routing & Data Fetching
+- **React Router v6** - Client-side routing
+- **TanStack Query (React Query)** - Powerful async state management
+
+### AI & OCR
+- **Google Gemini** - Advanced receipt parsing and OCR
+- **Qwen** - Alternative OCR model option
+- **Custom Receipt Parser** - Extracts items, prices, fees, and totals
+
+### Developer Tools
+- **ESLint** - Code quality and consistency
+- **PostCSS** - CSS processing
+- **Bun** - Fast package manager (lockfile present)
+
+### Key Libraries
+- `clsx` & `tailwind-merge` - Dynamic className composition
+- `date-fns` - Date manipulation
+- `react-hook-form` - Form management
+- `sonner` - Toast notifications
+- `zod` - Schema validation
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js (v16 or higher)
+- npm or bun package manager
+
+### Installation
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
+# Clone the repository
 git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Navigate to the project directory
+cd bill-painter
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Install dependencies
+npm install
+# or
+bun install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the development server
 npm run dev
+# or
+bun run dev
 ```
 
-**Edit a file directly in GitHub**
+The app will be available at `http://localhost:5173`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Build for Production
 
-**Use GitHub Codespaces**
+```sh
+npm run build
+# or
+bun run build
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 📱 Application Structure
 
-## What technologies are used for this project?
+```
+src/
+├── components/        # Reusable UI components
+│   ├── ui/           # shadcn/ui components
+│   └── ...           # Custom components
+├── hooks/            # Custom React hooks
+├── lib/              # Utilities and constants
+├── pages/            # Page components (routes)
+├── stores/           # Zustand state stores
+└── integrations/     # External service integrations
+```
 
-This project is built with:
+## 🎨 Key Components
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- **Dashboard**: Home view with quick actions and recent activity
+- **ScanPaint**: Interactive receipt scanning and item assignment
+- **GroupDetail**: Detailed view of group expenses and members
+- **Settlement**: Optimized payment settlement interface
+- **Bills**: Comprehensive expense list with filtering
 
-## How can I deploy this project?
+## 📦 State Management
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+The app uses Zustand with persistence for:
+- `expenseStore`: Expense tracking and balance calculations
+- `groupStore`: Group and member management
+- `paintStore`: Receipt scanning and item assignment state
+- `settingsStore`: User preferences and OCR model selection
 
-## Can I connect a custom domain to my Lovable project?
+## 🤝 Contributing
 
-Yes, you can!
+This project uses a mobile-first approach with a focus on intuitive UX. When contributing:
+- Follow the existing TypeScript patterns
+- Use the established color system for consistency
+- Ensure mobile responsiveness
+- Test thoroughly on touch devices
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 📄 License
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+[Add your license here]
