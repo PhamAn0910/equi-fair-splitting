@@ -26,6 +26,9 @@ export interface Group {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SupabaseClientType = ReturnType<typeof createClient<any>>;
 
+// Type for the getToken function from Clerk
+type GetTokenFn = () => Promise<string | null>;
+
 interface GroupState {
   groups: Group[];
   activeGroupId: string | null;
@@ -36,9 +39,10 @@ interface GroupState {
   supabase: SupabaseClientType | null;
   userId: string | null;
   realtimeChannel: RealtimeChannel | null;
+  getToken: GetTokenFn | null;
   
   // Init & Cleanup
-  initialize: (token: string, userId: string) => Promise<void>;
+  initialize: (getToken: GetTokenFn, userId: string) => Promise<void>;
   cleanup: () => void;
   
   // Data fetching
@@ -90,16 +94,24 @@ export const useGroupStore = create<GroupState>((set, get) => ({
   supabase: null,
   userId: null,
   realtimeChannel: null,
+  getToken: null,
 
-  initialize: async (token: string, userId: string) => {
-    // Create authenticated Supabase client
+  initialize: async (getToken: GetTokenFn, userId: string) => {
+    // Create authenticated Supabase client with dynamic token refresh
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          // Set initial auth header (will be refreshed by accessToken)
+          'apikey': supabaseAnonKey,
+        },
+      },
+      accessToken: async () => {
+        const token = await getToken();
+        return token ?? '';
       },
     });
 
-    set({ supabase, userId, isLoading: true });
+    set({ supabase, userId, getToken, isLoading: true });
 
     // Fetch initial data
     await get().fetchGroups();
@@ -133,7 +145,7 @@ export const useGroupStore = create<GroupState>((set, get) => ({
     if (realtimeChannel) {
       supabase?.removeChannel(realtimeChannel);
     }
-    set({ supabase: null, userId: null, realtimeChannel: null, groups: [] });
+    set({ supabase: null, userId: null, realtimeChannel: null, getToken: null, groups: [] });
   },
 
   fetchGroups: async () => {

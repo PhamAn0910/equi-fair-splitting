@@ -38,6 +38,9 @@ export interface Expense {
   category: 'food' | 'transport' | 'drinks' | 'shopping' | 'entertainment' | 'accommodation' | 'other';
 }
 
+// Type for the getToken function from Clerk
+type GetTokenFn = () => Promise<string | null>;
+
 interface ExpenseState {
   expenses: Expense[];
   isLoading: boolean;
@@ -46,9 +49,10 @@ interface ExpenseState {
   // Auth
   supabase: SupabaseClientType | null;
   realtimeChannel: RealtimeChannel | null;
+  getToken: GetTokenFn | null;
   
   // Init & Cleanup
-  initialize: (token: string, groupIds: string[]) => Promise<void>;
+  initialize: (getToken: GetTokenFn, groupIds: string[]) => Promise<void>;
   cleanup: () => void;
   
   // Data fetching
@@ -121,16 +125,24 @@ export const useExpenseStore = create<ExpenseState>((set, get) => ({
   error: null,
   supabase: null,
   realtimeChannel: null,
+  getToken: null,
 
-  initialize: async (token: string, groupIds: string[]) => {
-    // Create authenticated Supabase client
+  initialize: async (getToken: GetTokenFn, groupIds: string[]) => {
+    // Create authenticated Supabase client with dynamic token refresh
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          // Set initial auth header (will be refreshed by accessToken)
+          'apikey': supabaseAnonKey,
+        },
+      },
+      accessToken: async () => {
+        const token = await getToken();
+        return token ?? '';
       },
     });
 
-    set({ supabase, isLoading: true });
+    set({ supabase, getToken, isLoading: true });
 
     // Fetch initial data
     await get().fetchExpenses(groupIds);
@@ -174,7 +186,7 @@ export const useExpenseStore = create<ExpenseState>((set, get) => ({
     if (realtimeChannel) {
       supabase?.removeChannel(realtimeChannel);
     }
-    set({ supabase: null, realtimeChannel: null, expenses: [] });
+    set({ supabase: null, realtimeChannel: null, getToken: null, expenses: [] });
   },
 
   fetchExpenses: async (groupIds: string[]) => {
