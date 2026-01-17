@@ -1,6 +1,17 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
-import { supabaseAdmin } from './_lib/supabase-admin';
+import { createClient } from '@supabase/supabase-js';
+
+// Inline Supabase Admin Client (avoids module resolution issues in Vercel)
+const supabaseUrl = process.env.VITE_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY!;
+
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false,
+  },
+});
 
 // CRITICAL: Disable body parsing to get raw body for signature verification
 export const config = {
@@ -49,12 +60,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { meta, data } = payload;
   const eventType = meta.event_name;
 
-  // Extract userId from custom data
+  // Extract userId from custom data (supports both user_id and userId)
   const userId =
-    meta.custom_data?.userId || data.attributes?.first_order_item?.custom_data?.userId;
+    meta.custom_data?.user_id ||
+    meta.custom_data?.userId ||
+    data.attributes?.first_order_item?.custom_data?.user_id;
+
+  console.log('Webhook received:', eventType, 'userId:', userId);
 
   if (!userId) {
-    console.error('No userId found in webhook payload');
+    console.error('No userId found in webhook payload:', JSON.stringify(meta.custom_data));
     return res.status(400).send('Missing userId');
   }
 

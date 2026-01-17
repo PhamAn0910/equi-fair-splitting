@@ -30,7 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         checkoutData: {
           email,
           custom: {
-            userId, // Critical: Used for webhook reconciliation
+            user_id: userId, // Critical: Used for webhook reconciliation (use snake_case)
           },
         },
         productOptions: {
