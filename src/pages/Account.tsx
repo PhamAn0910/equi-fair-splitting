@@ -1,20 +1,31 @@
+import { useState, useEffect } from 'react';
 import { BottomNav } from '@/components/BottomNav';
 import { MemberAvatar } from '@/components/MemberAvatar';
-import { Settings, Bell, CreditCard, HelpCircle, LogOut, ChevronRight } from 'lucide-react';
+import { UpgradeDialog } from '@/components/UpgradeDialog';
+import { useSubscriptionStore } from '@/stores/subscriptionStore';
+import { Settings, Bell, CreditCard, HelpCircle, LogOut, ChevronRight, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useUser, useClerk } from '@clerk/clerk-react';
+import { useUser, useClerk, useAuth } from '@clerk/clerk-react';
 
 export default function Account() {
   const navigate = useNavigate();
   const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
+  const { getToken, userId } = useAuth();
   
-  const menuItems = [
-    { icon: Settings, label: 'Settings', description: 'App preferences', path: '/settings' },
-    { icon: Bell, label: 'Notifications', description: 'Manage alerts', path: null },
-    { icon: CreditCard, label: 'Subscription', description: 'Manage plan', path: null },
-    { icon: HelpCircle, label: 'Help & Support', description: 'Get assistance', path: null },
-  ];
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  
+  const { subscription, todayScans, fetchSubscription, getTodayScans } = useSubscriptionStore();
+  
+  // Fetch subscription and scan count on mount
+  useEffect(() => {
+    if (userId && getToken) {
+      fetchSubscription(userId, getToken);
+      getTodayScans(userId, getToken);
+    }
+  }, [userId, getToken, fetchSubscription, getTodayScans]);
+  
+  const planType = subscription?.planType || 'free';
 
   const handleSignOut = async () => {
     await signOut();
@@ -48,23 +59,89 @@ export default function Account() {
         </div>
       </header>
 
+      {/* Subscription Banner */}
+      <div className="px-4 mb-4">
+        <button
+          onClick={() => setShowUpgradeDialog(true)}
+          className="w-full p-4 bg-primary/10 border border-primary/20 rounded-xl flex items-center justify-between hover:bg-primary/15 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-primary" />
+            </div>
+            <div className="text-left">
+              <p className="font-medium text-foreground">
+                {planType === 'free' ? 'Upgrade to Pro' : `${planType.charAt(0).toUpperCase() + planType.slice(1)} Plan`}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {planType === 'free' 
+                  ? `${todayScans}/2 scans used today` 
+                  : planType === 'pro'
+                  ? `${todayScans}/50 scans used today`
+                  : 'Unlimited scans'}
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-primary" />
+        </button>
+      </div>
+
       <main className="px-4 space-y-2">
-        {menuItems.map(({ icon: Icon, label, description, path }) => (
-          <button
-            key={label}
-            onClick={() => path && navigate(path)}
-            className="w-full flex items-center gap-4 p-4 bg-card rounded-xl hover:bg-muted transition-colors"
-          >
-            <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-              <Icon className="w-5 h-5 text-foreground" />
-            </div>
-            <div className="flex-1 text-left">
-              <p className="font-medium text-foreground">{label}</p>
-              <p className="text-sm text-muted-foreground">{description}</p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-muted-foreground" />
-          </button>
-        ))}
+        <button
+          onClick={() => navigate('/settings')}
+          className="w-full flex items-center gap-4 p-4 bg-card rounded-xl hover:bg-muted transition-colors"
+        >
+          <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+            <Settings className="w-5 h-5 text-foreground" />
+          </div>
+          <div className="flex-1 text-left">
+            <p className="font-medium text-foreground">Settings</p>
+            <p className="text-sm text-muted-foreground">App preferences</p>
+          </div>
+          <ChevronRight className="w-5 h-5 text-muted-foreground" />
+        </button>
+
+        <button
+          onClick={() => setShowUpgradeDialog(true)}
+          className="w-full flex items-center gap-4 p-4 bg-card rounded-xl hover:bg-muted transition-colors"
+        >
+          <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+            <CreditCard className="w-5 h-5 text-foreground" />
+          </div>
+          <div className="flex-1 text-left">
+            <p className="font-medium text-foreground">Subscription</p>
+            <p className="text-sm text-muted-foreground">
+              Current: {planType.charAt(0).toUpperCase() + planType.slice(1)}
+            </p>
+          </div>
+          <ChevronRight className="w-5 h-5 text-muted-foreground" />
+        </button>
+
+        <button
+          className="w-full flex items-center gap-4 p-4 bg-card rounded-xl hover:bg-muted transition-colors opacity-50"
+        >
+          <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+            <Bell className="w-5 h-5 text-foreground" />
+          </div>
+          <div className="flex-1 text-left">
+            <p className="font-medium text-foreground">Notifications</p>
+            <p className="text-sm text-muted-foreground">Coming soon</p>
+          </div>
+          <ChevronRight className="w-5 h-5 text-muted-foreground" />
+        </button>
+
+        <button
+          className="w-full flex items-center gap-4 p-4 bg-card rounded-xl hover:bg-muted transition-colors opacity-50"
+        >
+          <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+            <HelpCircle className="w-5 h-5 text-foreground" />
+          </div>
+          <div className="flex-1 text-left">
+            <p className="font-medium text-foreground">Help & Support</p>
+            <p className="text-sm text-muted-foreground">Coming soon</p>
+          </div>
+          <ChevronRight className="w-5 h-5 text-muted-foreground" />
+        </button>
 
         <button 
           onClick={handleSignOut}
@@ -79,7 +156,16 @@ export default function Account() {
         </button>
       </main>
 
+      {/* Upgrade Dialog */}
+      <UpgradeDialog
+        open={showUpgradeDialog}
+        onOpenChange={setShowUpgradeDialog}
+        currentScans={todayScans}
+        planType={planType}
+      />
+
       <BottomNav />
     </div>
   );
 }
+
