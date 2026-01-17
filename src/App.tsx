@@ -1,8 +1,9 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useSyncManager } from "@/hooks/useSyncManager";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Index from "./pages/Index";
@@ -18,6 +19,21 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Initialize Lemon Squeezy overlay on route changes (SPA support)
+function LemonSqueezyInit() {
+  const location = useLocation();
+
+  useEffect(() => {
+    // @ts-expect-error - LemonSqueezy global from script
+    if (typeof window !== 'undefined' && window.createLemonSqueezy) {
+      // @ts-expect-error
+      window.createLemonSqueezy();
+    }
+  }, [location]);
+
+  return null;
+}
+
 const App = () => {
   useSyncManager();
 
@@ -27,6 +43,7 @@ const App = () => {
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <LemonSqueezyInit />
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Index />} />

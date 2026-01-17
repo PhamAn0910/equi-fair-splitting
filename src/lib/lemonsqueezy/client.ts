@@ -1,14 +1,14 @@
 // Lemon Squeezy client utilities for frontend
 
-const STORE_ID = import.meta.env.VITE_LEMONSQUEEZY_STORE_ID;
+export const STORE_ID = import.meta.env.VITE_LEMONSQUEEZY_STORE_ID;
 
 /**
- * Product variant IDs - Replace with your actual Lemon Squeezy variant IDs
- * after creating products in Phase 5
+ * Product variant IDs - Set via environment variables
+ * Create products in Lemon Squeezy Dashboard and add variant IDs to .env
  */
 export const PLAN_VARIANTS = {
-  pro: '', // Will be filled in Phase 5
-  unlimited: '', // Will be filled in Phase 5
+  pro: import.meta.env.VITE_LEMONSQUEEZY_PRO_VARIANT_ID || '',
+  unlimited: import.meta.env.VITE_LEMONSQUEEZY_UNLIMITED_VARIANT_ID || '',
 } as const;
 
 /**

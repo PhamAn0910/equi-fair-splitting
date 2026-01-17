@@ -1,0 +1,148 @@
+import { VercelRequest, VercelResponse } from '@vercel/node';
+import crypto from 'crypto';
+import { supabaseAdmin } from './_lib/supabase-admin';
+
+// CRITICAL: Disable body parsing to get raw body for signature verification
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+const webhookSecret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET!;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function buffer(readable: any): Promise<Buffer> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of readable) {
+    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+  }
+  return Buffer.concat(chunks);
+}
+
+function verifySignature(rawBody: Buffer, signature: string, secret: string): boolean {
+  const hmac = crypto.createHmac('sha256', secret);
+  const digest = hmac.update(rawBody).digest('hex');
+  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest));
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).send('Method Not Allowed');
+  }
+
+  const rawBody = await buffer(req);
+  const signature = req.headers['x-signature'] as string;
+
+  if (!signature) {
+    console.error('Missing X-Signature header');
+    return res.status(401).send('Missing signature');
+  }
+
+  // Verify webhook signature
+  if (!verifySignature(rawBody, signature, webhookSecret)) {
+    console.error('Invalid webhook signature');
+    return res.status(401).send('Invalid signature');
+  }
+
+  const payload = JSON.parse(rawBody.toString());
+  const { meta, data } = payload;
+  const eventType = meta.event_name;
+
+  // Extract userId from custom data
+  const userId =
+    meta.custom_data?.userId || data.attributes?.first_order_item?.custom_data?.userId;
+
+  if (!userId) {
+    console.error('No userId found in webhook payload');
+    return res.status(400).send('Missing userId');
+  }
+
+  try {
+    switch (eventType) {
+      case 'order_created': {
+        // Provision access when order is created
+        const order = data.attributes;
+        const variantId = order.first_order_item?.variant_id?.toString();
+
+        // Map variantId to plan type using environment variables
+        const proVariantId = process.env.LEMONSQUEEZY_PRO_VARIANT_ID;
+        const unlimitedVariantId = process.env.LEMONSQUEEZY_UNLIMITED_VARIANT_ID;
+
+        let planType = 'free';
+        if (variantId === proVariantId) planType = 'pro';
+        if (variantId === unlimitedVariantId) planType = 'unlimited';
+
+        await supabaseAdmin.from('user_subscriptions').upsert({
+          user_id: userId,
+          lemonsqueezy_order_id: data.id,
+          lemonsqueezy_customer_id: order.customer_id,
+          variant_id: variantId,
+          plan_type: planType,
+          status: 'active',
+        });
+        break;
+      }
+
+      case 'subscription_created': {
+        // Handle subscription creation
+        const subscription = data.attributes;
+        await supabaseAdmin.from('user_subscriptions').upsert({
+          user_id: userId,
+          lemonsqueezy_subscription_id: data.id,
+          lemonsqueezy_customer_id: subscription.customer_id,
+          variant_id: subscription.variant_id?.toString(),
+          status: subscription.status,
+          current_period_end: subscription.renews_at,
+        });
+        break;
+      }
+
+      case 'subscription_updated': {
+        // Update subscription status
+        const updatedSub = data.attributes;
+        await supabaseAdmin
+          .from('user_subscriptions')
+          .update({
+            status: updatedSub.status,
+            current_period_end: updatedSub.renews_at,
+          })
+          .eq('lemonsqueezy_subscription_id', data.id);
+        break;
+      }
+
+      case 'subscription_cancelled':
+        // Mark as cancelled but keep access until period ends
+        await supabaseAdmin
+          .from('user_subscriptions')
+          .update({ status: 'cancelled' })
+          .eq('lemonsqueezy_subscription_id', data.id);
+        break;
+
+      case 'subscription_expired':
+        // Remove access when subscription expires
+        await supabaseAdmin
+          .from('user_subscriptions')
+          .update({ status: 'expired', plan_type: 'free' })
+          .eq('lemonsqueezy_subscription_id', data.id);
+        break;
+
+      case 'subscription_payment_failed':
+        // Handle failed payment - trigger dunning email
+        console.log('Payment failed for subscription:', data.id);
+        await supabaseAdmin
+          .from('user_subscriptions')
+          .update({ status: 'past_due' })
+          .eq('lemonsqueezy_subscription_id', data.id);
+        break;
+
+      default:
+        console.log('Unhandled event type:', eventType);
+    }
+
+    res.status(200).json({ received: true });
+  } catch (err) {
+    console.error('Webhook handler error:', err);
+    res.status(500).json({ error: 'Webhook handler failed' });
+  }
+}
