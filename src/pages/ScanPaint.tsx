@@ -4,6 +4,7 @@ import { ArrowLeft, MoreVertical, Plus, Check, Camera, Image as ImageIcon, Loade
 import { usePaintStore, type ExpenseItem } from '@/stores/paintStore';
 import { useGroupStore } from '@/stores/groupStore';
 import { useExpenseStore } from '@/stores/expenseStore';
+import { useSubscriptionStore } from '@/stores/subscriptionStore';
 import { MemberAvatar } from '@/components/MemberAvatar';
 import { ExpenseItemRow } from '@/components/ExpenseItemRow';
 import { ScanConfirmDialog } from '@/components/ScanConfirmDialog';
@@ -11,11 +12,14 @@ import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/constants';
 import { useReceiptOCR } from '@/hooks/useReceiptOCR';
 import { toast } from 'sonner';
+import { useAuth } from '@clerk/clerk-react';
 
 export default function ScanPaint() {
   const navigate = useNavigate();
   const { getActiveGroup } = useGroupStore();
   const activeGroup = getActiveGroup();
+  const { userId, getToken } = useAuth();
+  const { incrementScan, getLifetimeScans } = useSubscriptionStore();
 
   const {
     members,
@@ -71,6 +75,13 @@ export default function ScanPaint() {
     if (receiptData.items.length > 0) {
       setReceiptData(receiptData);
       setHasScanned(true);
+      
+      // Increment scan count after successful scan
+      if (userId && getToken) {
+        await incrementScan(userId, getToken);
+        // Refresh lifetime scans count
+        await getLifetimeScans(userId, getToken);
+      }
     }
     
     // Reset file input
