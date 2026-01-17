@@ -11,7 +11,7 @@ export interface User {
 }
 
 export interface Subscription {
-  planType: 'free' | 'pro' | 'unlimited';
+  planType: 'free' | 'pro';
   status: string;
   currentPeriodEnd: string | null;
 }

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { createSupabaseClient } from '@/lib/supabase/client';
 
-type PlanType = 'free' | 'pro' | 'unlimited';
+type PlanType = 'free' | 'pro';
 
 interface Subscription {
   planType: PlanType;
@@ -12,6 +12,7 @@ interface Subscription {
 interface SubscriptionStore {
   subscription: Subscription | null;
   todayScans: number;
+  lifetimeScans: number;
   isLoading: boolean;
 
   fetchSubscription: (
@@ -22,24 +23,28 @@ interface SubscriptionStore {
     userId: string,
     getToken: (options?: { template?: string }) => Promise<string | null>
   ) => Promise<number>;
+  getLifetimeScans: (
+    userId: string,
+    getToken: (options?: { template?: string }) => Promise<string | null>
+  ) => Promise<number>;
   incrementScan: (
     userId: string,
     getToken: (options?: { template?: string }) => Promise<string | null>
   ) => Promise<boolean>;
   canScan: () => boolean;
-  getRemainingScans: () => number | 'unlimited';
+  getRemainingScans: () => number;
   reset: () => void;
 }
 
-const PLAN_LIMITS: Record<PlanType, number> = {
-  free: 2,
-  pro: 50,
-  unlimited: Infinity,
+const PLAN_LIMITS = {
+  free: 2, // lifetime scans
+  pro: 50, // per day
 };
 
 export const useSubscriptionStore = create<SubscriptionStore>((set, get) => ({
   subscription: null,
   todayScans: 0,
+  lifetimeScans: 0,
   isLoading: false,
 
   fetchSubscription: async (userId, getToken) => {
@@ -117,6 +122,29 @@ export const useSubscriptionStore = create<SubscriptionStore>((set, get) => ({
     }
   },
 
+  getLifetimeScans: async (userId, getToken) => {
+    try {
+      const supabase = await createSupabaseClient(getToken);
+
+      const { data, error } = await supabase
+        .from('ocr_usage')
+        .select('scan_count')
+        .eq('user_id', userId);
+
+      if (error) {
+        console.error('Error fetching lifetime scan count:', error);
+        return 0;
+      }
+
+      const totalScans = data?.reduce((sum, record) => sum + (record.scan_count || 0), 0) || 0;
+      set({ lifetimeScans: totalScans });
+      return totalScans;
+    } catch (error) {
+      console.error('Error in getLifetimeScans:', error);
+      return 0;
+    }
+  },
+
   incrementScan: async (userId, getToken) => {
     try {
       const supabase = await createSupabaseClient(getToken);
@@ -148,18 +176,24 @@ export const useSubscriptionStore = create<SubscriptionStore>((set, get) => ({
   },
 
   canScan: () => {
-    const { subscription, todayScans } = get();
+    const { subscription, todayScans, lifetimeScans } = get();
     const planType = subscription?.planType || 'free';
 
-    if (planType === 'unlimited') return true;
+    if (planType === 'free') {
+      return lifetimeScans < PLAN_LIMITS[planType];
+    }
+    // Pro plan: check daily scans
     return todayScans < PLAN_LIMITS[planType];
   },
 
   getRemainingScans: () => {
-    const { subscription, todayScans } = get();
+    const { subscription, todayScans, lifetimeScans } = get();
     const planType = subscription?.planType || 'free';
 
-    if (planType === 'unlimited') return 'unlimited';
+    if (planType === 'free') {
+      return Math.max(0, PLAN_LIMITS[planType] - lifetimeScans);
+    }
+    // Pro plan: daily limit
     return Math.max(0, PLAN_LIMITS[planType] - todayScans);
   },
 
@@ -167,6 +201,7 @@ export const useSubscriptionStore = create<SubscriptionStore>((set, get) => ({
     set({
       subscription: null,
       todayScans: 0,
+      lifetimeScans: 0,
       isLoading: false,
     });
   },

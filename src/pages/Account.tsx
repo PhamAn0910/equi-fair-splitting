@@ -15,15 +15,16 @@ export default function Account() {
   
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   
-  const { subscription, todayScans, fetchSubscription, getTodayScans } = useSubscriptionStore();
+  const { subscription, todayScans, lifetimeScans, fetchSubscription, getTodayScans, getLifetimeScans } = useSubscriptionStore();
   
   // Fetch subscription and scan count on mount
   useEffect(() => {
     if (userId && getToken) {
       fetchSubscription(userId, getToken);
       getTodayScans(userId, getToken);
+      getLifetimeScans(userId, getToken);
     }
-  }, [userId, getToken, fetchSubscription, getTodayScans]);
+  }, [userId, getToken, fetchSubscription, getTodayScans, getLifetimeScans]);
   
   const planType = subscription?.planType || 'free';
 
@@ -71,14 +72,12 @@ export default function Account() {
             </div>
             <div className="text-left">
               <p className="font-medium text-foreground">
-                {planType === 'free' ? 'Upgrade to Pro' : `${planType.charAt(0).toUpperCase() + planType.slice(1)} Plan`}
+                {planType === 'free' ? 'Start 3-Day Free Trial' : `${planType.charAt(0).toUpperCase() + planType.slice(1)} Plan`}
               </p>
               <p className="text-sm text-muted-foreground">
                 {planType === 'free' 
-                  ? `${todayScans}/2 scans used today` 
-                  : planType === 'pro'
-                  ? `${todayScans}/50 scans used today`
-                  : 'Unlimited scans'}
+                  ? `${lifetimeScans}/2 scans used (lifetime)` 
+                  : `${todayScans}/50 scans used today`}
               </p>
             </div>
           </div>
@@ -160,8 +159,9 @@ export default function Account() {
       <UpgradeDialog
         open={showUpgradeDialog}
         onOpenChange={setShowUpgradeDialog}
-        currentScans={todayScans}
+        currentScans={planType === 'free' ? lifetimeScans : todayScans}
         planType={planType}
+        isLifetimeScans={planType === 'free'}
       />
 
       <BottomNav />

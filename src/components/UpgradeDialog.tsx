@@ -14,7 +14,8 @@ interface UpgradeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentScans: number;
-  planType: 'free' | 'pro' | 'unlimited';
+  planType: 'free' | 'pro';
+  isLifetimeScans?: boolean;
 }
 
 // Replace these with your actual Lemon Squeezy variant IDs after creating products
@@ -22,17 +23,9 @@ const plans = [
   {
     id: 'pro',
     name: 'Pro',
-    price: '$4.99',
+    price: '$2.99',
     variantId: import.meta.env.VITE_LEMONSQUEEZY_PRO_VARIANT_ID || '',
-    features: ['50 scans/day', 'Priority support', 'Expense analytics'],
-    popular: false,
-  },
-  {
-    id: 'unlimited',
-    name: 'Unlimited',
-    price: '$9.99',
-    variantId: import.meta.env.VITE_LEMONSQUEEZY_UNLIMITED_VARIANT_ID || '',
-    features: ['Unlimited scans', 'Priority support', 'Expense analytics', 'Export to CSV'],
+    features: ['50 scans/day', '3-day free trial', 'Priority support', 'Expense analytics'],
     popular: true,
   },
 ];
@@ -42,6 +35,7 @@ export function UpgradeDialog({
   onOpenChange,
   currentScans,
   planType,
+  isLifetimeScans = false,
 }: UpgradeDialogProps) {
   const { user } = useUser();
   const [isLoading, setIsLoading] = useState<string | null>(null);
@@ -86,7 +80,8 @@ export function UpgradeDialog({
     }
   };
 
-  const maxScans = planType === 'pro' ? 50 : 2;
+  const maxScans = planType === 'free' ? 2 : 50;
+  const scanPeriod = isLifetimeScans ? 'lifetime' : 'today';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -109,10 +104,12 @@ export function UpgradeDialog({
               <span className="font-bold text-foreground">
                 {currentScans}/{maxScans}
               </span>{' '}
-              scans today
+              scans {scanPeriod}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Resets at midnight • Current plan:{' '}
+              {planType === 'free' 
+                ? 'Get 3-day free trial with Pro subscription' 
+                : 'Resets at midnight'} • Current plan:{' '}
               <span className="capitalize font-medium">{planType}</span>
             </p>
           </div>
@@ -173,6 +170,8 @@ export function UpgradeDialog({
                   ? 'Current Plan'
                   : !plan.variantId
                   ? 'Coming Soon'
+                  : planType === 'free'
+                  ? 'Start 3-Day Free Trial'
                   : `Upgrade to ${plan.name}`}
               </Button>
             </div>

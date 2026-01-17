@@ -38,17 +38,15 @@ function verifySignature(rawBody: Buffer, signature: string, secret: string): bo
 }
 
 // Helper to determine plan type from variant ID
-function getPlanType(variantId: string | number | undefined): 'free' | 'pro' | 'unlimited' {
+function getPlanType(variantId: string | number | undefined): 'free' | 'pro' {
   if (!variantId) return 'free';
   
   const variantStr = String(variantId);
   const proVariantId = String(process.env.LEMONSQUEEZY_PRO_VARIANT_ID || '');
-  const unlimitedVariantId = String(process.env.LEMONSQUEEZY_UNLIMITED_VARIANT_ID || '');
   
-  console.log('getPlanType - variantId:', variantStr, 'proVariantId:', proVariantId, 'unlimitedVariantId:', unlimitedVariantId);
+  console.log('getPlanType - variantId:', variantStr, 'proVariantId:', proVariantId);
   
   if (proVariantId && variantStr === proVariantId) return 'pro';
-  if (unlimitedVariantId && variantStr === unlimitedVariantId) return 'unlimited';
   
   // If variant exists but doesn't match env vars, default to pro (they paid for something)
   if (variantStr && variantStr !== '') return 'pro';

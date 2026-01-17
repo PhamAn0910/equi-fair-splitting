@@ -49,7 +49,7 @@ export interface Database {
           lemonsqueezy_customer_id: string | null;
           lemonsqueezy_order_id: string | null;
           lemonsqueezy_subscription_id: string | null;
-          plan_type: 'free' | 'pro' | 'unlimited';
+          plan_type: 'free' | 'pro';
           status: string;
           variant_id: string | null;
           current_period_end: string | null;

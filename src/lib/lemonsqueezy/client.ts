@@ -8,7 +8,6 @@ export const STORE_ID = import.meta.env.VITE_LEMONSQUEEZY_STORE_ID;
  */
 export const PLAN_VARIANTS = {
   pro: import.meta.env.VITE_LEMONSQUEEZY_PRO_VARIANT_ID || '',
-  unlimited: import.meta.env.VITE_LEMONSQUEEZY_UNLIMITED_VARIANT_ID || '',
 } as const;
 
 /**
@@ -16,19 +15,14 @@ export const PLAN_VARIANTS = {
  */
 export const PLAN_LIMITS = {
   free: {
-    scansPerDay: 2,
+    scansLifetime: 2,
     name: 'Free',
     price: '$0',
   },
   pro: {
     scansPerDay: 50,
     name: 'Pro',
-    price: '$4.99/mo',
-  },
-  unlimited: {
-    scansPerDay: Infinity,
-    name: 'Unlimited',
-    price: '$9.99/mo',
+    price: '$2.99/mo',
   },
 } as const;
 
@@ -63,16 +57,25 @@ export const openCheckout = (checkoutUrl: string) => {
 /**
  * Check if user can perform OCR scan based on plan and usage
  */
-export const canScan = (planType: PlanType, todayScans: number): boolean => {
-  const limit = PLAN_LIMITS[planType]?.scansPerDay ?? 2;
-  return todayScans < limit;
+export const canScan = (planType: PlanType, scans: number): boolean => {
+  if (planType === 'free') {
+    const limit = PLAN_LIMITS[planType]?.scansLifetime ?? 2;
+    return scans < limit;
+  }
+  // Pro plan: daily limit
+  const limit = PLAN_LIMITS[planType]?.scansPerDay ?? 50;
+  return scans < limit;
 };
 
 /**
- * Get remaining scans for today
+ * Get remaining scans
  */
-export const getRemainingScans = (planType: PlanType, todayScans: number): number | 'unlimited' => {
-  const limit = PLAN_LIMITS[planType]?.scansPerDay ?? 2;
-  if (limit === Infinity) return 'unlimited';
-  return Math.max(0, limit - todayScans);
+export const getRemainingScans = (planType: PlanType, scans: number): number => {
+  if (planType === 'free') {
+    const limit = PLAN_LIMITS[planType]?.scansLifetime ?? 2;
+    return Math.max(0, limit - scans);
+  }
+  // Pro plan: daily limit
+  const limit = PLAN_LIMITS[planType]?.scansPerDay ?? 50;
+  return Math.max(0, limit - scans);
 };

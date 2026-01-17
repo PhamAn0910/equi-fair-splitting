@@ -8,13 +8,10 @@
 2. Navigate to **Products** in your store.
 3. Create **Pro Plan**:
    - Name: "BillPainter Pro"
-   - Price: $4.99 / Recurring / Monthly
+   - Price: $2.99 / Recurring / Monthly
+   - **Important:** Enable the "3-day free trial" option
    - Create a **Variant** for this plan
-4. Create **Unlimited Plan**:
-   - Name: "BillPainter Unlimited"
-   - Price: $9.99 / Recurring / Monthly
-   - Create a **Variant** for this plan
-5. Copy the **Variant IDs** (e.g., `123456`, `789012`) for both plans.
+4. Copy the **Variant ID** (e.g., `123456`) for the Pro plan.
 
 ## 5.2 Lemon Squeezy Webhook Handler
 
@@ -91,7 +88,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Map variantId to plan type
         let planType = 'free';
         if (variantId === '123456') planType = 'pro'; // Replace with actual variant ID
-        if (variantId === '789012') planType = 'unlimited'; // Replace with actual variant ID
 
         await supabaseAdmin.from('user_subscriptions').upsert({
           user_id: userId,
@@ -215,7 +211,7 @@ import { create } from 'zustand';
 import { createSupabaseClient } from '@/lib/supabase/client';
 
 interface Subscription {
-  planType: 'free' | 'pro' | 'unlimited';
+  planType: 'free' | 'pro';
   status: string;
   currentPeriodEnd: string | null;
 }
@@ -284,11 +280,11 @@ export const useSubscriptionStore = create<SubscriptionStore>((set, get) => ({
   },
 
   canScan: () => {
-    const { subscription, todayScans } = get();
+    const { subscription, todayScans, lifetimeScans } = get();
     
-    if (subscription?.planType === 'unlimited') return true;
     if (subscription?.planType === 'pro') return todayScans < 50;
-    return todayScans < 2; // Free plan: 2 scans/day
+    // Free plan: 2 scans lifetime
+    return lifetimeScans < 2;
   },
 }));
 ```
@@ -308,23 +304,16 @@ interface UpgradeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentScans: number;
-  planType: 'free' | 'pro' | 'unlimited';
+  planType: 'free' | 'pro';
 }
 
 const plans = [
   {
     id: 'pro',
     name: 'Pro',
-    price: '$4.99',
+    price: '$2.99',
     variantId: '123456', // Replace with your actual Lemon Squeezy variant ID
-    features: ['50 scans/day', 'Priority support', 'Advanced analytics'],
-  },
-  {
-    id: 'unlimited',
-    name: 'Unlimited',
-    price: '$9.99',
-    variantId: '789012', // Replace with your actual Lemon Squeezy variant ID
-    features: ['Unlimited scans', 'Priority support', 'Advanced analytics', 'API access'],
+    features: ['50 scans/day', '3-day free trial', 'Priority support', 'Advanced analytics'],
   },
 ];
 
