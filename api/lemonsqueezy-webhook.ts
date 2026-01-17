@@ -37,6 +37,25 @@ function verifySignature(rawBody: Buffer, signature: string, secret: string): bo
   return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest));
 }
 
+// Helper to determine plan type from variant ID
+function getPlanType(variantId: string | number | undefined): 'free' | 'pro' | 'unlimited' {
+  if (!variantId) return 'free';
+  
+  const variantStr = String(variantId);
+  const proVariantId = String(process.env.LEMONSQUEEZY_PRO_VARIANT_ID || '');
+  const unlimitedVariantId = String(process.env.LEMONSQUEEZY_UNLIMITED_VARIANT_ID || '');
+  
+  console.log('getPlanType - variantId:', variantStr, 'proVariantId:', proVariantId, 'unlimitedVariantId:', unlimitedVariantId);
+  
+  if (proVariantId && variantStr === proVariantId) return 'pro';
+  if (unlimitedVariantId && variantStr === unlimitedVariantId) return 'unlimited';
+  
+  // If variant exists but doesn't match env vars, default to pro (they paid for something)
+  if (variantStr && variantStr !== '') return 'pro';
+  
+  return 'free';
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).send('Method Not Allowed');
@@ -78,21 +97,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'order_created': {
         // Provision access when order is created
         const order = data.attributes;
-        const variantId = order.first_order_item?.variant_id?.toString();
+        const variantId = order.first_order_item?.variant_id;
+        const planType = getPlanType(variantId);
 
-        // Map variantId to plan type using environment variables
-        const proVariantId = process.env.LEMONSQUEEZY_PRO_VARIANT_ID;
-        const unlimitedVariantId = process.env.LEMONSQUEEZY_UNLIMITED_VARIANT_ID;
-
-        let planType = 'free';
-        if (variantId === proVariantId) planType = 'pro';
-        if (variantId === unlimitedVariantId) planType = 'unlimited';
+        console.log('order_created - variantId:', variantId, 'planType:', planType);
 
         await supabaseAdmin.from('user_subscriptions').upsert({
           user_id: userId,
           lemonsqueezy_order_id: data.id,
           lemonsqueezy_customer_id: order.customer_id,
-          variant_id: variantId,
+          variant_id: String(variantId),
           plan_type: planType,
           status: 'active',
         });
@@ -102,15 +116,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'subscription_created': {
         // Handle subscription creation
         const subscription = data.attributes;
-        const variantId = subscription.variant_id?.toString();
-        
-        // Map variantId to plan type
-        const proVariantId = process.env.LEMONSQUEEZY_PRO_VARIANT_ID;
-        const unlimitedVariantId = process.env.LEMONSQUEEZY_UNLIMITED_VARIANT_ID;
-        
-        let planType = 'free';
-        if (variantId === proVariantId) planType = 'pro';
-        if (variantId === unlimitedVariantId) planType = 'unlimited';
+        const variantId = subscription.variant_id;
+        const planType = getPlanType(variantId);
         
         console.log('subscription_created - variantId:', variantId, 'planType:', planType);
         
@@ -118,7 +125,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           user_id: userId,
           lemonsqueezy_subscription_id: data.id,
           lemonsqueezy_customer_id: subscription.customer_id,
-          variant_id: variantId,
+          variant_id: String(variantId),
           plan_type: planType,
           status: subscription.status === 'on_trial' ? 'active' : subscription.status,
           current_period_end: subscription.renews_at,
