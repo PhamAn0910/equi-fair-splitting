@@ -14,6 +14,8 @@ export interface Subscription {
   planType: 'free' | 'pro';
   status: string;
   currentPeriodEnd: string | null;
+  trialEndsAt: string | null;
+  cancelledAt: string | null;
 }
 
 export interface OCRUsage {

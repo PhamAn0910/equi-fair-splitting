@@ -53,6 +53,8 @@ export interface Database {
           status: string;
           variant_id: string | null;
           current_period_end: string | null;
+          trial_ends_at: string | null;
+          cancelled_at: string | null;
           created_at: string;
         };
         Insert: Omit<Database['public']['Tables']['user_subscriptions']['Row'], 'id' | 'created_at'>;

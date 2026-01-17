@@ -117,7 +117,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const variantId = subscription.variant_id;
         const planType = getPlanType(variantId);
         
-        console.log('subscription_created - variantId:', variantId, 'planType:', planType);
+        console.log('subscription_created - variantId:', variantId, 'planType:', planType, 'status:', subscription.status);
         
         await supabaseAdmin.from('user_subscriptions').upsert({
           user_id: userId,
@@ -127,47 +127,93 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           plan_type: planType,
           status: subscription.status === 'on_trial' ? 'active' : subscription.status,
           current_period_end: subscription.renews_at,
+          trial_ends_at: subscription.trial_ends_at,
         });
         break;
       }
 
       case 'subscription_updated': {
-        // Update subscription status
-        const updatedSub = data.attributes;
+        // Handle subscription updates (e.g., user cancels but still in trial/paid period)
+        const subscription = data.attributes;
+        
+        console.log('subscription_updated - status:', subscription.status, 'ends_at:', subscription.ends_at);
+        
+        // Update subscription details but DON'T downgrade yet
+        // User may have cancelled but still has time left in trial/paid period
         await supabaseAdmin
           .from('user_subscriptions')
           .update({
-            status: updatedSub.status,
-            current_period_end: updatedSub.renews_at,
+            status: subscription.status,
+            current_period_end: subscription.renews_at,
+            trial_ends_at: subscription.trial_ends_at,
           })
           .eq('lemonsqueezy_subscription_id', data.id);
         break;
       }
 
-      case 'subscription_cancelled':
-        // Mark as cancelled but keep access until period ends
+      case 'subscription_cancelled': {
+        // User cancelled subscription but may still have access until period ends
+        // DO NOT downgrade immediately - wait for subscription_expired event
+        const subscription = data.attributes;
+        
+        console.log('subscription_cancelled - userId:', userId, 'subscription_id:', data.id);
+        
         await supabaseAdmin
           .from('user_subscriptions')
-          .update({ status: 'cancelled' })
+          .update({
+            status: 'cancelled',
+            cancelled_at: new Date().toISOString(),
+          })
           .eq('lemonsqueezy_subscription_id', data.id);
+        
+        console.log('Subscription marked as cancelled, access maintained until expiration');
         break;
+      }
 
-      case 'subscription_expired':
-        // Remove access when subscription expires
-        await supabaseAdmin
-          .from('user_subscriptions')
-          .update({ status: 'expired', plan_type: 'free' })
-          .eq('lemonsqueezy_subscription_id', data.id);
+      case 'subscription_expired': {
+        // This is the definitive signal to downgrade
+        // Fired when trial ends without payment OR paid period ends after cancellation
+        const subscription = data.attributes;
+        
+        console.log('subscription_expired - userId:', userId, 'downgrading to free plan');
+        
+        // Check if ends_at is in the past (safety check)
+        const endsAt = subscription.ends_at ? new Date(subscription.ends_at) : new Date();
+        const now = new Date();
+        
+        if (endsAt <= now) {
+          // Downgrade to free plan
+          await supabaseAdmin
+            .from('user_subscriptions')
+            .update({
+              plan_type: 'free',
+              status: 'expired',
+              current_period_end: null,
+              trial_ends_at: null,
+            })
+            .eq('lemonsqueezy_subscription_id', data.id);
+          
+          console.log('User downgraded to free plan successfully');
+        } else {
+          console.log('Subscription not yet expired, keeping current plan until:', endsAt);
+        }
         break;
+      }
 
-      case 'subscription_payment_failed':
-        // Handle failed payment - trigger dunning email
-        console.log('Payment failed for subscription:', data.id);
+      case 'subscription_payment_failed': {
+        // Payment failed - could be trial ending or regular payment
+        // Mark as payment failed but don't downgrade yet
+        // Wait for subscription_expired event
+        console.log('subscription_payment_failed - userId:', userId, 'subscription_id:', data.id);
+        
         await supabaseAdmin
           .from('user_subscriptions')
           .update({ status: 'past_due' })
           .eq('lemonsqueezy_subscription_id', data.id);
+        
+        console.log('Subscription marked as past_due, waiting for expiration event');
         break;
+      }
 
       default:
         console.log('Unhandled event type:', eventType);

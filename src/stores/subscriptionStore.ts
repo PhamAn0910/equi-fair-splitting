@@ -7,6 +7,8 @@ interface Subscription {
   planType: PlanType;
   status: string;
   currentPeriodEnd: string | null;
+  trialEndsAt: string | null;
+  cancelledAt: string | null;
 }
 
 interface SubscriptionStore {
@@ -70,6 +72,8 @@ export const useSubscriptionStore = create<SubscriptionStore>((set, get) => ({
             planType: data.plan_type || 'free',
             status: data.status || 'active',
             currentPeriodEnd: data.current_period_end,
+            trialEndsAt: data.trial_ends_at,
+            cancelledAt: data.cancelled_at,
           },
         });
       } else {
@@ -79,6 +83,8 @@ export const useSubscriptionStore = create<SubscriptionStore>((set, get) => ({
             planType: 'free',
             status: 'active',
             currentPeriodEnd: null,
+            trialEndsAt: null,
+            cancelledAt: null,
           },
         });
       }
@@ -90,6 +96,8 @@ export const useSubscriptionStore = create<SubscriptionStore>((set, get) => ({
           planType: 'free',
           status: 'active',
           currentPeriodEnd: null,
+          trialEndsAt: null,
+          cancelledAt: null,
         },
       });
     } finally {
