@@ -102,12 +102,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'subscription_created': {
         // Handle subscription creation
         const subscription = data.attributes;
+        const variantId = subscription.variant_id?.toString();
+        
+        // Map variantId to plan type
+        const proVariantId = process.env.LEMONSQUEEZY_PRO_VARIANT_ID;
+        const unlimitedVariantId = process.env.LEMONSQUEEZY_UNLIMITED_VARIANT_ID;
+        
+        let planType = 'free';
+        if (variantId === proVariantId) planType = 'pro';
+        if (variantId === unlimitedVariantId) planType = 'unlimited';
+        
+        console.log('subscription_created - variantId:', variantId, 'planType:', planType);
+        
         await supabaseAdmin.from('user_subscriptions').upsert({
           user_id: userId,
           lemonsqueezy_subscription_id: data.id,
           lemonsqueezy_customer_id: subscription.customer_id,
-          variant_id: subscription.variant_id?.toString(),
-          status: subscription.status,
+          variant_id: variantId,
+          plan_type: planType,
+          status: subscription.status === 'on_trial' ? 'active' : subscription.status,
           current_period_end: subscription.renews_at,
         });
         break;
