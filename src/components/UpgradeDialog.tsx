@@ -94,21 +94,34 @@ export function UpgradeDialog({
 
     setIsLoadingPortal(true);
     try {
-      const response = await fetch(`/api/lemonsqueezy-portal?userId=${user.id}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to get portal URL');
+      // Option 1: Try to get portal URL from API (if available)
+      try {
+        const response = await fetch(`/api/lemonsqueezy-portal?userId=${user.id}`);
+        
+        if (response.ok) {
+          const { portalUrl } = await response.json();
+          window.open(portalUrl, '_blank');
+          setShowCancelDialog(false);
+          onOpenChange(false);
+          setIsLoadingPortal(false);
+          return;
+        }
+      } catch (apiError) {
+        console.log('API endpoint not available, using direct link');
       }
 
-      const { portalUrl } = await response.json();
-      
-      // Open Lemon Squeezy customer portal in new tab
-      window.open(portalUrl, '_blank');
+      // Option 2: Fallback - Direct link to Lemon Squeezy customer portal
+      // Users will need to log in with the email they used for the subscription
+      // Note: This requires Customer Portal to be enabled in Lemon Squeezy settings
+      window.open('https://app.lemonsqueezy.com/my-orders', '_blank');
       setShowCancelDialog(false);
       onOpenChange(false);
     } catch (error) {
       console.error('Error opening portal:', error);
-      alert('Failed to open subscription portal. Please try again.');
+      // Even if there's an error, try the direct link
+      window.open('https://app.lemonsqueezy.com/my-orders', '_blank');
+      setShowCancelDialog(false);
+      onOpenChange(false);
     } finally {
       setIsLoadingPortal(false);
     }

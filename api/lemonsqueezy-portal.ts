@@ -45,11 +45,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const lsSubscription = await getSubscription(subscription.lemonsqueezy_subscription_id);
 
       if (lsSubscription.data?.data) {
-        // Get the customer portal URL (update payment method URL works for cancellation too)
-        const portalUrl = lsSubscription.data.data.attributes.urls?.update_payment_method;
+        // Get the signed customer portal URL (this is the correct field for subscription management)
+        const portalUrl = lsSubscription.data.data.attributes.urls?.customer_portal;
 
         if (portalUrl) {
           return res.status(200).json({ portalUrl });
+        }
+
+        // Fallback: try update_payment_method URL (also allows cancellation)
+        const updateUrl = lsSubscription.data.data.attributes.urls?.update_payment_method;
+        if (updateUrl) {
+          return res.status(200).json({ portalUrl: updateUrl });
         }
 
         // Fallback: construct customer portal URL using order ID if available
