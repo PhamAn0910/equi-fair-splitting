@@ -8,6 +8,7 @@ import { useSubscriptionStore } from '@/stores/subscriptionStore';
 import { MemberAvatar } from '@/components/MemberAvatar';
 import { ExpenseItemRow } from '@/components/ExpenseItemRow';
 import { ScanConfirmDialog } from '@/components/ScanConfirmDialog';
+import { UpgradeDialog } from '@/components/UpgradeDialog';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/constants';
 import { useReceiptOCR } from '@/hooks/useReceiptOCR';
@@ -19,7 +20,17 @@ export default function ScanPaint() {
   const { getActiveGroup } = useGroupStore();
   const activeGroup = getActiveGroup();
   const { userId, getToken } = useAuth();
-  const { incrementScan, getLifetimeScans } = useSubscriptionStore();
+  const { 
+    subscription, 
+    todayScans, 
+    lifetimeScans, 
+    isLoading: isSubscriptionLoading,
+    fetchSubscription, 
+    getTodayScans, 
+    getLifetimeScans, 
+    incrementScan, 
+    canScan 
+  } = useSubscriptionStore();
 
   const {
     members,
@@ -42,9 +53,19 @@ export default function ScanPaint() {
   const { parseReceipt, isLoading: isScanning } = useReceiptOCR();
   const [hasScanned, setHasScanned] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  // Load subscription data on mount
+  useEffect(() => {
+    if (userId && getToken) {
+      fetchSubscription(userId, getToken);
+      getTodayScans(userId, getToken);
+      getLifetimeScans(userId, getToken);
+    }
+  }, [userId, getToken, fetchSubscription, getTodayScans, getLifetimeScans]);
 
   // Initialize with group members
   useEffect(() => {
@@ -70,6 +91,13 @@ export default function ScanPaint() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Check if user can scan before processing
+    if (!canScan()) {
+      setShowUpgradeDialog(true);
+      event.target.value = '';
+      return;
+    }
+
     const receiptData = await parseReceipt(file);
     
     if (receiptData.items.length > 0) {
@@ -79,7 +107,8 @@ export default function ScanPaint() {
       // Increment scan count after successful scan
       if (userId && getToken) {
         await incrementScan(userId, getToken);
-        // Refresh lifetime scans count
+        // Refresh scan counts
+        await getTodayScans(userId, getToken);
         await getLifetimeScans(userId, getToken);
       }
     }
@@ -89,10 +118,20 @@ export default function ScanPaint() {
   };
 
   const handleTakePhoto = () => {
+    // Check if user can scan before opening camera
+    if (!canScan()) {
+      setShowUpgradeDialog(true);
+      return;
+    }
     cameraInputRef.current?.click();
   };
 
   const handleSelectFromGallery = () => {
+    // Check if user can scan before opening gallery
+    if (!canScan()) {
+      setShowUpgradeDialog(true);
+      return;
+    }
     fileInputRef.current?.click();
   };
 
@@ -165,6 +204,8 @@ export default function ScanPaint() {
   const assignedTotal = itemsSubtotal - unassignedTotal;
   const progressPercent = itemsSubtotal > 0 ? (assignedTotal / itemsSubtotal) * 100 : 0;
   const hasFees = totalFees !== 0;
+  const planType = subscription?.planType || 'free';
+  const userCanScan = canScan();
 
   if (!activeGroup) {
     return (
@@ -251,25 +292,57 @@ export default function ScanPaint() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 gap-4 w-full max-w-xs">
-                  <button
-                    onClick={handleTakePhoto}
-                    className="aspect-square rounded-2xl bg-primary flex flex-col items-center justify-center gap-2 text-primary-foreground hover:opacity-90 transition-opacity"
-                  >
-                    <Camera className="w-8 h-8" />
-                    <span className="text-sm font-medium">Take Photo</span>
-                  </button>
-                  <button
-                    onClick={handleSelectFromGallery}
-                    className="aspect-square rounded-2xl bg-muted flex flex-col items-center justify-center gap-2 text-foreground hover:bg-muted/80 transition-colors"
-                  >
-                    <ImageIcon className="w-8 h-8" />
-                    <span className="text-sm font-medium">Gallery</span>
-                  </button>
-                </div>
-                <p className="text-sm text-muted-foreground text-center">
-                  Scan a receipt to extract items automatically
-                </p>
+                {isSubscriptionLoading ? (
+                  <div className="text-center">
+                    <Loader2 className="w-8 h-8 text-muted-foreground animate-spin mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">Loading subscription...</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-4 w-full max-w-xs">
+                      <button
+                        onClick={handleTakePhoto}
+                        disabled={!userCanScan || isSubscriptionLoading}
+                        className="aspect-square rounded-2xl bg-primary flex flex-col items-center justify-center gap-2 text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Camera className="w-8 h-8" />
+                        <span className="text-sm font-medium">Take Photo</span>
+                      </button>
+                      <button
+                        onClick={handleSelectFromGallery}
+                        disabled={!userCanScan || isSubscriptionLoading}
+                        className="aspect-square rounded-2xl bg-muted flex flex-col items-center justify-center gap-2 text-foreground hover:bg-muted/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <ImageIcon className="w-8 h-8" />
+                        <span className="text-sm font-medium">Gallery</span>
+                      </button>
+                    </div>
+                    {!userCanScan ? (
+                      <div className="text-center space-y-2">
+                        <p className="text-sm font-medium text-foreground">
+                          Scan limit reached
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {planType === 'free' 
+                            ? `You've used ${lifetimeScans}/2 lifetime scans` 
+                            : `You've used ${todayScans}/50 scans today`}
+                        </p>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => setShowUpgradeDialog(true)}
+                          className="mt-2"
+                        >
+                          Upgrade to Pro
+                        </Button>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center">
+                        Scan a receipt to extract items automatically
+                      </p>
+                    )}
+                  </>
+                )}
               </>
             )}
           </div>
@@ -432,6 +505,15 @@ export default function ScanPaint() {
         currency={activeGroup.currency}
         memberBreakdowns={memberBreakdowns}
         onConfirm={handleFinalConfirm}
+      />
+
+      {/* Upgrade Dialog */}
+      <UpgradeDialog
+        open={showUpgradeDialog}
+        onOpenChange={setShowUpgradeDialog}
+        currentScans={planType === 'free' ? lifetimeScans : todayScans}
+        planType={planType}
+        isLifetimeScans={planType === 'free'}
       />
     </div>
   );
