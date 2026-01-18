@@ -136,18 +136,53 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Handle subscription updates (e.g., user cancels but still in trial/paid period)
         const subscription = data.attributes;
         
-        console.log('subscription_updated - status:', subscription.status, 'ends_at:', subscription.ends_at);
+        console.log('subscription_updated - status:', subscription.status, 'ends_at:', subscription.ends_at, 'trial_ends_at:', subscription.trial_ends_at);
+        
+        // Get current subscription to check if it was cancelled
+        const { data: currentSub } = await supabaseAdmin
+          .from('user_subscriptions')
+          .select('cancelled_at, plan_type')
+          .eq('lemonsqueezy_subscription_id', data.id)
+          .single();
+        
+        // Build update data
+        const updateData: {
+          status: string;
+          current_period_end: string | null;
+          trial_ends_at: string | null;
+          cancelled_at?: string | null;
+          plan_type?: 'free' | 'pro';
+        } = {
+          status: subscription.status,
+          current_period_end: subscription.renews_at,
+          trial_ends_at: subscription.trial_ends_at,
+        };
+        
+        // Preserve cancelled_at if subscription is still cancelled
+        // Only clear it if subscription is no longer cancelled
+        if (subscription.status === 'cancelled' && currentSub?.cancelled_at) {
+          // Keep existing cancelled_at timestamp
+          updateData.cancelled_at = currentSub.cancelled_at;
+        } else if (subscription.status !== 'cancelled') {
+          // Clear cancelled_at if subscription is active again
+          updateData.cancelled_at = null;
+        }
+        
+        // Explicit payment success verification: If trial ended and subscription is now active,
+        // ensure plan_type is 'pro' (trial ended successfully, payment succeeded)
+        if (subscription.status === 'active' && !subscription.trial_ends_at && currentSub?.plan_type !== 'pro') {
+          // Trial ended successfully, payment succeeded - explicitly set to pro
+          updateData.plan_type = 'pro';
+          console.log('Trial ended successfully, payment succeeded - setting plan_type to pro');
+        }
         
         // Update subscription details but DON'T downgrade yet
         // User may have cancelled but still has time left in trial/paid period
         await supabaseAdmin
           .from('user_subscriptions')
-          .update({
-            status: subscription.status,
-            current_period_end: subscription.renews_at,
-            trial_ends_at: subscription.trial_ends_at,
-          })
+          .update(updateData)
           .eq('lemonsqueezy_subscription_id', data.id);
+        
         break;
       }
 

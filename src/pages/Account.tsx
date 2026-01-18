@@ -162,6 +162,9 @@ export default function Account() {
         currentScans={planType === 'free' ? lifetimeScans : todayScans}
         planType={planType}
         isLifetimeScans={planType === 'free'}
+        subscriptionStatus={subscription?.status}
+        cancelledAt={subscription?.cancelledAt}
+        trialEndsAt={subscription?.trialEndsAt}
       />
 
       <BottomNav />
