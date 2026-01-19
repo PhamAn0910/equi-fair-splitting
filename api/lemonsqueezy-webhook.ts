@@ -107,7 +107,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           variant_id: String(variantId),
           plan_type: planType,
           status: 'active',
-        });
+        }, { onConflict: 'user_id', ignoreDuplicates: true });
         break;
       }
 
@@ -121,6 +121,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         console.log('subscription_created - variantId:', variantId, 'planType:', planType, 'status:', subscription.status, 'orderId:', orderId);
 
+        console.log('SAVING SUB ID:', data.id);
         await supabaseAdmin.from('user_subscriptions').upsert({
           user_id: userId,
           lemonsqueezy_subscription_id: data.id,
@@ -131,7 +132,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           status: subscription.status === 'on_trial' ? 'active' : subscription.status,
           current_period_end: subscription.renews_at,
           trial_ends_at: subscription.trial_ends_at,
-        });
+        }, { onConflict: 'user_id' });
         break;
       }
 
