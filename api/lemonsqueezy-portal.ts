@@ -71,10 +71,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Continue to fallback
     }
 
-    // Final fallback: construct URL using subscription ID
-    // Users can manage their subscription through Lemon Squeezy's customer portal
+    // Final fallback: use your branded customer portal URL
     return res.status(200).json({
-      portalUrl: `https://app.lemonsqueezy.com/my-orders`,
+      portalUrl: `https://quean.lemonsqueezy.com/billing`,
     });
   } catch (error: unknown) {
     console.error('Lemon Squeezy Portal Error:', error);

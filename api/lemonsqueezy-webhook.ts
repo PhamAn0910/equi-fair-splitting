@@ -116,13 +116,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const subscription = data.attributes;
         const variantId = subscription.variant_id;
         const planType = getPlanType(variantId);
-        
-        console.log('subscription_created - variantId:', variantId, 'planType:', planType, 'status:', subscription.status);
-        
+        const orderId = subscription.order_id;
+        const customerId = subscription.customer_id;
+
+        console.log('subscription_created - variantId:', variantId, 'planType:', planType, 'status:', subscription.status, 'orderId:', orderId);
+
         await supabaseAdmin.from('user_subscriptions').upsert({
           user_id: userId,
           lemonsqueezy_subscription_id: data.id,
-          lemonsqueezy_customer_id: subscription.customer_id,
+          lemonsqueezy_order_id: orderId,
+          lemonsqueezy_customer_id: customerId,
           variant_id: String(variantId),
           plan_type: planType,
           status: subscription.status === 'on_trial' ? 'active' : subscription.status,
