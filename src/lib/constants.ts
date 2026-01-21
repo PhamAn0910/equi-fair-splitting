@@ -1,26 +1,24 @@
 // Member color palette for paint assignments
 export const MEMBER_COLORS = [
-  { name: 'coral', class: 'member-coral', hex: '#E8734A', hsl: '12 76% 61%' },
-  { name: 'teal', class: 'member-teal', hex: '#2DD4BF', hsl: '172 66% 50%' },
-  { name: 'amber', class: 'member-amber', hex: '#F59E0B', hsl: '38 92% 50%' },
-  { name: 'violet', class: 'member-violet', hex: '#A855F7', hsl: '270 60% 60%' },
-  { name: 'lime', class: 'member-lime', hex: '#84CC16', hsl: '84 81% 44%' },
-  { name: 'pink', class: 'member-pink', hex: '#EC4899', hsl: '330 81% 60%' },
-  { name: 'cyan', class: 'member-cyan', hex: '#06B6D4', hsl: '192 91% 50%' },
-  { name: 'orange', class: 'member-orange', hex: '#F97316', hsl: '25 95% 53%' },
+  { name: 'sage', class: 'member-sage', hex: '#6B7B5F' },
+  { name: 'terracotta', class: 'member-terracotta', hex: '#C17F59' },
+  { name: 'ocean', class: 'member-ocean', hex: '#5B8A8A' },
+  { name: 'lavender', class: 'member-lavender', hex: '#9B8AC4' },
+  { name: 'sunset', class: 'member-sunset', hex: '#E8A87C' },
+  { name: 'rose', class: 'member-rose', hex: '#C4A4A4' },
+  { name: 'mint', class: 'member-mint', hex: '#7DB9A5' },
+  { name: 'slate', class: 'member-slate', hex: '#708090' },
 ] as const;
 
 export type MemberColor = typeof MEMBER_COLORS[number];
 
-// Group background colors - pale versions of the provided palette
+// Group background colors
 export const GROUP_COLORS = [
-  { name: 'sage', hex: '#A3B565', bgHex: 'rgba(163, 181, 101, 0.15)' },
-  { name: 'lavender', hex: '#C4C3E3', bgHex: 'rgba(196, 195, 227, 0.25)' },
-  { name: 'mint', hex: '#CFE0B4', bgHex: 'rgba(207, 224, 180, 0.25)' },
-  { name: 'periwinkle', hex: '#B7B6DD', bgHex: 'rgba(183, 182, 221, 0.25)' },
-  { name: 'apricot', hex: '#FCDD9D', bgHex: 'rgba(252, 221, 157, 0.25)' },
-  { name: 'olive', hex: '#8FA05A', bgHex: 'rgba(143, 160, 90, 0.15)' },
-  { name: 'orange', hex: '#F1642E', bgHex: 'rgba(241, 100, 46, 0.12)' },
+  { name: 'sage', bgHex: '#E8EDE5', hex: '#6B7B5F' },
+  { name: 'terracotta', bgHex: '#F5EBE6', hex: '#C17F59' },
+  { name: 'ocean', bgHex: '#E5EDED', hex: '#5B8A8A' },
+  { name: 'lavender', bgHex: '#EDEAF3', hex: '#9B8AC4' },
+  { name: 'sunset', bgHex: '#F8F0E8', hex: '#E8A87C' },
 ] as const;
 
 export type GroupColor = typeof GROUP_COLORS[number];

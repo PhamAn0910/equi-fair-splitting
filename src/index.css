@@ -44,15 +44,15 @@
 
     --radius: 1rem;
 
-    /* Member Paint Colors - Vibrant neon palette */
-    --member-coral: 12 76% 61%;
-    --member-teal: 172 66% 50%;
-    --member-amber: 38 92% 50%;
-    --member-violet: 270 60% 60%;
-    --member-lime: 84 81% 44%;
-    --member-pink: 330 81% 60%;
-    --member-cyan: 192 91% 50%;
-    --member-orange: 25 95% 53%;
+    /* Member Paint Colors - Earthy palette */
+    --member-sage: 94 13% 43%;
+    --member-terracotta: 22 45% 55%;
+    --member-ocean: 180 20% 45%;
+    --member-lavender: 256 33% 65%;
+    --member-sunset: 24 69% 70%;
+    --member-rose: 0 22% 71%;
+    --member-mint: 160 28% 61%;
+    --member-slate: 210 13% 50%;
 
     /* Success/Warning states */
     --success: 142 71% 45%;
@@ -101,15 +101,39 @@
 }
 
 @layer utilities {
+
   /* Member color utilities */
-  .member-coral { background-color: hsl(var(--member-coral)); }
-  .member-teal { background-color: hsl(var(--member-teal)); }
-  .member-amber { background-color: hsl(var(--member-amber)); }
-  .member-violet { background-color: hsl(var(--member-violet)); }
-  .member-lime { background-color: hsl(var(--member-lime)); }
-  .member-pink { background-color: hsl(var(--member-pink)); }
-  .member-cyan { background-color: hsl(var(--member-cyan)); }
-  .member-orange { background-color: hsl(var(--member-orange)); }
+  .member-sage {
+    background-color: hsl(var(--member-sage));
+  }
+
+  .member-terracotta {
+    background-color: hsl(var(--member-terracotta));
+  }
+
+  .member-ocean {
+    background-color: hsl(var(--member-ocean));
+  }
+
+  .member-lavender {
+    background-color: hsl(var(--member-lavender));
+  }
+
+  .member-sunset {
+    background-color: hsl(var(--member-sunset));
+  }
+
+  .member-rose {
+    background-color: hsl(var(--member-rose));
+  }
+
+  .member-mint {
+    background-color: hsl(var(--member-mint));
+  }
+
+  .member-slate {
+    background-color: hsl(var(--member-slate));
+  }
 
   /* Glass effect */
   .glass {

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { createClient, RealtimeChannel } from '@supabase/supabase-js';
+import { MEMBER_COLORS, GROUP_COLORS, getNextColor } from '@/lib/constants';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -34,20 +35,20 @@ interface GroupState {
   activeGroupId: string | null;
   isLoading: boolean;
   error: string | null;
-  
+
   // Auth
   supabase: SupabaseClientType | null;
   userId: string | null;
   realtimeChannel: RealtimeChannel | null;
   getToken: GetTokenFn | null;
-  
+
   // Init & Cleanup
   initialize: (getToken: GetTokenFn, userId: string) => Promise<void>;
   cleanup: () => void;
-  
+
   // Data fetching
   fetchGroups: () => Promise<void>;
-  
+
   // Actions
   createGroup: (name: string, currency?: string, adminName?: string) => Promise<Group | null>;
   updateGroup: (groupId: string, updates: Partial<Pick<Group, 'name' | 'currency' | 'colorIndex'>>) => Promise<boolean>;
@@ -55,36 +56,14 @@ interface GroupState {
   setActiveGroup: (groupId: string | null) => void;
   getActiveGroup: () => Group | undefined;
   setGroups: (groups: Group[]) => void;
-  
+
   // Member actions
   addMember: (groupId: string, memberData: { name: string; colorHex?: string; isAdmin?: boolean }) => Promise<GroupMember | null>;
   removeMember: (groupId: string, memberId: string) => Promise<boolean>;
   updateMember: (groupId: string, memberId: string, updates: Partial<GroupMember>) => Promise<boolean>;
 }
 
-const MEMBER_COLORS = [
-  { name: 'sage', hex: '#6B7B5F' },
-  { name: 'terracotta', hex: '#C17F59' },
-  { name: 'ocean', hex: '#5B8A8A' },
-  { name: 'lavender', hex: '#9B8AC4' },
-  { name: 'sunset', hex: '#E8A87C' },
-  { name: 'rose', hex: '#C4A4A4' },
-  { name: 'mint', hex: '#7DB9A5' },
-  { name: 'slate', hex: '#708090' },
-];
 
-const GROUP_COLORS = [
-  { name: 'sage', bgHex: '#E8EDE5', hex: '#6B7B5F' },
-  { name: 'terracotta', bgHex: '#F5EBE6', hex: '#C17F59' },
-  { name: 'ocean', bgHex: '#E5EDED', hex: '#5B8A8A' },
-  { name: 'lavender', bgHex: '#EDEAF3', hex: '#9B8AC4' },
-  { name: 'sunset', bgHex: '#F8F0E8', hex: '#E8A87C' },
-];
-
-function getNextColor(usedColors: string[]) {
-  const available = MEMBER_COLORS.find(c => !usedColors.includes(c.name));
-  return available || MEMBER_COLORS[usedColors.length % MEMBER_COLORS.length];
-}
 
 export const useGroupStore = create<GroupState>((set, get) => ({
   groups: [],
@@ -424,11 +403,11 @@ export const useGroupStore = create<GroupState>((set, get) => ({
       groups: groups.map(g =>
         g.id === groupId
           ? {
-              ...g,
-              members: g.members.map(m =>
-                m.id === memberId ? { ...m, ...updates } : m
-              ),
-            }
+            ...g,
+            members: g.members.map(m =>
+              m.id === memberId ? { ...m, ...updates } : m
+            ),
+          }
           : g
       ),
     });
