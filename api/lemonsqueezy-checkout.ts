@@ -6,6 +6,8 @@ const STORE_ID = process.env.VITE_LEMONSQUEEZY_STORE_ID!;
 const APP_URL = process.env.VITE_APP_URL || 'http://localhost:5173';
 
 // Initialize Lemon Squeezy SDK
+import { supabaseAdmin } from './_lib/supabase-admin';
+
 lemonSqueezySetup({ apiKey: LEMONSQUEEZY_API_KEY });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -22,6 +24,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    // Check if user is a returning customer (has any subscription record)
+    // If they exist in our DB, they have likely used a trial before
+    const { data: existingSub } = await supabaseAdmin
+      .from('user_subscriptions')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    const shouldSkipTrial = !!existingSub;
+
     // Create checkout session with user metadata
     const checkout = await createCheckout(
       STORE_ID,
@@ -36,12 +48,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         productOptions: {
           redirectUrl: `${APP_URL}/account?success=true`,
         },
+        checkoutOptions: {
+          skipTrial: shouldSkipTrial,
+        },
       }
     );
 
     // Return the checkout URL to the client
-    return res.status(200).json({ 
-      checkoutUrl: checkout.data?.data.attributes.url 
+    return res.status(200).json({
+      checkoutUrl: checkout.data?.data.attributes.url
     });
   } catch (error: unknown) {
     console.error('Lemon Squeezy Checkout Error:', error);
