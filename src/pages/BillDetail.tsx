@@ -90,7 +90,13 @@ export default function BillDetail() {
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border safe-top">
         <div className="flex items-center justify-between p-4">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              if (group) {
+                navigate(`/group/${group.id}`);
+              } else {
+                navigate('/bills');
+              }
+            }}
             className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors"
           >
             <ArrowLeft className="w-5 h-5 text-foreground" />
@@ -117,7 +123,7 @@ export default function BillDetail() {
             </button>
           </div>
 
-          <button 
+          <button
             onClick={() => setShowDeleteDialog(true)}
             className="text-sm font-medium text-destructive hover:underline"
           >
@@ -213,9 +219,8 @@ export default function BillDetail() {
               {expense.items.map((item, index) => (
                 <div
                   key={item.id}
-                  className={`flex items-center justify-between p-3 ${
-                    index !== expense.items!.length - 1 ? 'border-b border-border' : ''
-                  }`}
+                  className={`flex items-center justify-between p-3 ${index !== expense.items!.length - 1 ? 'border-b border-border' : ''
+                    }`}
                 >
                   <div className="flex-1">
                     <p className="font-medium text-foreground">{item.name}</p>
@@ -255,7 +260,7 @@ export default function BillDetail() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleConfirmDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >

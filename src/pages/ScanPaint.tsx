@@ -20,16 +20,16 @@ export default function ScanPaint() {
   const { getActiveGroup } = useGroupStore();
   const activeGroup = getActiveGroup();
   const { userId, getToken } = useAuth();
-  const { 
-    subscription, 
-    todayScans, 
-    lifetimeScans, 
+  const {
+    subscription,
+    todayScans,
+    lifetimeScans,
     isLoading: isSubscriptionLoading,
-    fetchSubscription, 
-    getTodayScans, 
-    getLifetimeScans, 
-    incrementScan, 
-    canScan 
+    fetchSubscription,
+    getTodayScans,
+    getLifetimeScans,
+    incrementScan,
+    canScan
   } = useSubscriptionStore();
 
   const {
@@ -54,7 +54,7 @@ export default function ScanPaint() {
   const [hasScanned, setHasScanned] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -99,11 +99,11 @@ export default function ScanPaint() {
     }
 
     const receiptData = await parseReceipt(file);
-    
+
     if (receiptData.items.length > 0) {
       setReceiptData(receiptData);
       setHasScanned(true);
-      
+
       // Increment scan count after successful scan
       if (userId && getToken) {
         await incrementScan(userId, getToken);
@@ -112,7 +112,7 @@ export default function ScanPaint() {
         await getLifetimeScans(userId, getToken);
       }
     }
-    
+
     // Reset file input
     event.target.value = '';
   };
@@ -238,7 +238,13 @@ export default function ScanPaint() {
       {/* Header */}
       <header className="flex items-center justify-between p-4 border-b border-border safe-top">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => {
+            if (activeGroup) {
+              navigate(`/group/${activeGroup.id}`);
+            } else {
+              navigate('/groups');
+            }
+          }}
           className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -323,12 +329,12 @@ export default function ScanPaint() {
                           Scan limit reached
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {planType === 'free' 
-                            ? `You've used ${lifetimeScans}/2 lifetime scans` 
+                          {planType === 'free'
+                            ? `You've used ${lifetimeScans}/2 lifetime scans`
                             : `You've used ${todayScans}/50 scans today`}
                         </p>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => setShowUpgradeDialog(true)}
                           className="mt-2"
@@ -353,8 +359,8 @@ export default function ScanPaint() {
               <p className="text-sm text-muted-foreground">
                 {items.length} items found
               </p>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={() => {
                   setHasScanned(false);
@@ -437,7 +443,7 @@ export default function ScanPaint() {
               </span>
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden">
-              <div 
+              <div
                 className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-300"
                 style={{ width: `${progressPercent}%` }}
               />
@@ -449,10 +455,10 @@ export default function ScanPaint() {
             {members.map((member) => {
               const breakdown = getMemberBreakdown(member.id);
               if (breakdown.grandTotal === 0) return null;
-              
-              const hasFeesForMember = breakdown.taxShare > 0 || breakdown.tipShare > 0 || 
-                                        breakdown.serviceShare > 0 || breakdown.discountShare > 0;
-              
+
+              const hasFeesForMember = breakdown.taxShare > 0 || breakdown.tipShare > 0 ||
+                breakdown.serviceShare > 0 || breakdown.discountShare > 0;
+
               return (
                 <div key={member.id} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -478,7 +484,7 @@ export default function ScanPaint() {
           </div>
 
           {/* Confirm Button */}
-          <Button 
+          <Button
             className="w-full gap-2"
             size="lg"
             disabled={unassignedTotal > 0}

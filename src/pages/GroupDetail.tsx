@@ -96,7 +96,7 @@ export default function GroupDetail() {
     const date = new Date(dateStr);
     const now = new Date();
     const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays} days ago`;
@@ -109,7 +109,7 @@ export default function GroupDetail() {
       <header className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground p-4 pb-20 safe-top">
         <div className="flex items-center justify-between mb-6">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/groups')}
             className="p-2 -ml-2 rounded-lg hover:bg-white/10 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -125,7 +125,7 @@ export default function GroupDetail() {
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit Group
               </DropdownMenuItem>
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => setShowDeleteDialog(true)}
                 className="text-destructive focus:text-destructive"
               >
@@ -159,7 +159,7 @@ export default function GroupDetail() {
             </div>
           ))}
           <div className="flex flex-col items-center gap-1 flex-shrink-0">
-            <button 
+            <button
               onClick={() => setShowAddMember(true)}
               className="w-12 h-12 rounded-full border-2 border-dashed border-primary-foreground/30 flex items-center justify-center text-primary-foreground/50 hover:border-primary-foreground hover:text-primary-foreground transition-colors"
             >
@@ -181,7 +181,7 @@ export default function GroupDetail() {
           </div>
           <div className="bg-card rounded-xl p-4 shadow-card">
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Your Balance</p>
-            <p 
+            <p
               className="text-xl font-bold"
               style={{ color: yourBalance >= 0 ? '#3b761f' : 'rgb(231, 110, 80)' }}
             >
@@ -195,14 +195,14 @@ export default function GroupDetail() {
       <main className="p-4 space-y-6">
         {/* Quick Actions */}
         <div className="grid grid-cols-3 gap-3">
-          <Button 
+          <Button
             onClick={handleScanPaint}
             className="h-auto py-4 flex-col gap-2"
           >
             <ScanLine className="w-5 h-5" />
             Scan
           </Button>
-          <Button 
+          <Button
             variant="secondary"
             onClick={() => setShowAddExpense(true)}
             className="h-auto py-4 flex-col gap-2"
@@ -210,7 +210,7 @@ export default function GroupDetail() {
             <Receipt className="w-5 h-5" />
             Add
           </Button>
-          <Button 
+          <Button
             variant="secondary"
             onClick={() => navigate('/settle')}
             className="h-auto py-4 flex-col gap-2"
@@ -226,7 +226,7 @@ export default function GroupDetail() {
             <h2 className="text-lg font-semibold text-foreground">
               Expenses ({expenses.length})
             </h2>
-            <button 
+            <button
               onClick={() => navigate('/bills')}
               className="text-sm text-accent font-medium hover:underline"
             >
@@ -256,7 +256,7 @@ export default function GroupDetail() {
               })}
             </div>
           ) : (
-            <div 
+            <div
               onClick={() => setShowAddExpense(true)}
               className="border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
             >
@@ -274,7 +274,7 @@ export default function GroupDetail() {
             {group.members.map((member) => {
               const balance = balances[member.id] || 0;
               const isPositive = balance >= 0;
-              
+
               return (
                 <div key={member.id} className="flex items-center gap-3 p-3 bg-card rounded-xl">
                   <MemberAvatar
@@ -285,21 +285,21 @@ export default function GroupDetail() {
                   <div className="flex-1">
                     <p className="font-medium text-foreground">{member.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      {balance === 0 
-                        ? 'settled up' 
-                        : isPositive 
-                          ? 'gets back' 
+                      {balance === 0
+                        ? 'settled up'
+                        : isPositive
+                          ? 'gets back'
                           : 'owes'
                       }
                     </p>
                   </div>
-                  <p 
+                  <p
                     className="font-semibold"
                     style={{
-                      color: balance === 0 
+                      color: balance === 0
                         ? undefined
-                        : isPositive 
-                          ? '#3b761f' 
+                        : isPositive
+                          ? '#3b761f'
                           : 'rgb(231, 110, 80)'
                     }}
                   >
@@ -348,15 +348,15 @@ export default function GroupDetail() {
               />
             </div>
             <div className="flex gap-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setShowEditDialog(false)}
                 className="flex-1"
               >
                 Cancel
               </Button>
-              <Button 
-                onClick={handleSaveEdit} 
+              <Button
+                onClick={handleSaveEdit}
                 className="flex-1"
                 disabled={!editGroupName.trim()}
               >
@@ -378,7 +378,7 @@ export default function GroupDetail() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleConfirmDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
