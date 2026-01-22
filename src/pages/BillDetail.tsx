@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { useExpenseStore } from '@/stores/expenseStore';
 import { useGroupStore } from '@/stores/groupStore';
@@ -35,6 +35,8 @@ export default function BillDetail() {
   const navigate = useNavigate();
   const { expenses, getExpensesByGroup, deleteExpense } = useExpenseStore();
   const { groups } = useGroupStore();
+  const [searchParams] = useSearchParams();
+  const from = searchParams.get('from');
 
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
 
@@ -74,8 +76,13 @@ export default function BillDetail() {
     if (!billId) return;
     deleteExpense(billId);
     setShowDeleteDialog(false);
-    // Navigate back to group detail or bills page
-    if (group) {
+
+    // Navigate back to where we came from
+    if (from === 'bills') {
+      navigate('/bills');
+    } else if (from === 'group' && group) {
+      navigate(`/group/${group.id}`);
+    } else if (group) {
       navigate(`/group/${group.id}`);
     } else {
       navigate('/bills');
@@ -91,7 +98,11 @@ export default function BillDetail() {
         <div className="flex items-center justify-between p-4">
           <button
             onClick={() => {
-              if (group) {
+              if (from === 'bills') {
+                navigate('/bills');
+              } else if (from === 'group' && group) {
+                navigate(`/group/${group.id}`);
+              } else if (group) {
                 navigate(`/group/${group.id}`);
               } else {
                 navigate('/bills');
@@ -105,7 +116,7 @@ export default function BillDetail() {
           {/* Navigation between bills */}
           <div className="flex items-center gap-2">
             <button
-              onClick={() => prevExpense && navigate(`/bill/${prevExpense.id}`)}
+              onClick={() => prevExpense && navigate(`/bill/${prevExpense.id}${from ? `?from=${from}` : ''}`)}
               disabled={!prevExpense}
               className="p-1 rounded hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
             >
@@ -115,7 +126,7 @@ export default function BillDetail() {
               {expense.description}
             </span>
             <button
-              onClick={() => nextExpense && navigate(`/bill/${nextExpense.id}`)}
+              onClick={() => nextExpense && navigate(`/bill/${nextExpense.id}${from ? `?from=${from}` : ''}`)}
               disabled={!nextExpense}
               className="p-1 rounded hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
             >

@@ -241,7 +241,7 @@ export default function GroupDetail() {
                 return (
                   <div
                     key={expense.id}
-                    onClick={() => navigate(`/bill/${expense.id}`)}
+                    onClick={() => navigate(`/bill/${expense.id}?from=group`, { state: { from: 'group' } })}
                     className="cursor-pointer hover:bg-muted/50 rounded-xl transition-colors"
                   >
                     <ActivityItem

@@ -33,7 +33,7 @@ export default function Bills() {
   const { groups, getActiveGroup } = useGroupStore();
   const { expenses } = useExpenseStore();
   const navigate = useNavigate();
-  
+
   const activeGroup = getActiveGroup();
   const [selectedGroupId, setSelectedGroupId] = useState<string>('all');
   const [showAddOptions, setShowAddOptions] = useState(false);
@@ -69,10 +69,10 @@ export default function Bills() {
   };
 
   // Filter and sort expenses
-  const filteredExpenses = selectedGroupId === 'all' 
-    ? expenses 
+  const filteredExpenses = selectedGroupId === 'all'
+    ? expenses
     : expenses.filter(e => e.groupId === selectedGroupId);
-    
+
   const sortedExpenses = [...filteredExpenses].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
@@ -83,10 +83,10 @@ export default function Bills() {
       navigate('/scan');
     } else {
       // Use selected filter group, active group, or first available group
-      const targetGroup = selectedGroupId !== 'all' 
+      const targetGroup = selectedGroupId !== 'all'
         ? groups.find(g => g.id === selectedGroupId)
         : activeGroup || groups[0];
-      
+
       if (targetGroup) {
         setAddExpenseGroupId(targetGroup.id);
         setShowAddExpenseDialog(true);
@@ -123,21 +123,21 @@ export default function Bills() {
       <main className="px-4 space-y-2">
         {sortedExpenses.map((expense) => {
           const groupInfo = getGroupInfo(expense);
-          
+
           return (
             <div
               key={expense.id}
-              onClick={() => navigate(`/bill/${expense.id}`)}
+              onClick={() => navigate(`/bill/${expense.id}?from=bills`, { state: { from: 'bills' } })}
               className="relative flex items-center gap-3 p-4 bg-card rounded-xl cursor-pointer hover:opacity-90 transition-all border border-border/50 overflow-hidden"
             >
               {/* Left color bar */}
-              <div 
+              <div
                 className="absolute left-0 top-0 bottom-0 w-[2px]"
                 style={{ backgroundColor: groupInfo.hex }}
               />
-              
+
               {/* Icon with colored background */}
-              <div 
+              <div
                 className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ backgroundColor: `${groupInfo.hex}1A` }}
               >
@@ -145,7 +145,7 @@ export default function Bills() {
                   {categoryIcons[expense.category] || <Receipt className="w-5 h-5" />}
                 </div>
               </div>
-              
+
               {/* Content */}
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-foreground truncate">
@@ -155,7 +155,7 @@ export default function Bills() {
                   Paid by {getPayerName(expense)} • {formatExpenseDate(expense.date)}
                 </p>
               </div>
-              
+
               {/* Amount */}
               <p className="font-semibold text-foreground">
                 {formatCurrency(expense.totalAmount)}
@@ -189,14 +189,14 @@ export default function Bills() {
           <div className="p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-foreground">Add Bill</h3>
-              <button 
+              <button
                 onClick={() => setShowAddOptions(false)}
                 className="p-1 rounded-full hover:bg-muted transition-colors"
               >
                 <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
-            
+
             <div className="space-y-2">
               <button
                 onClick={() => handleAddOptionSelect('scan')}
@@ -210,7 +210,7 @@ export default function Bills() {
                   <p className="text-sm text-muted-foreground">Capture and split instantly</p>
                 </div>
               </button>
-              
+
               <button
                 onClick={() => handleAddOptionSelect('manual')}
                 className="w-full flex items-center gap-4 p-4 rounded-xl bg-muted hover:bg-muted/80 transition-colors"
@@ -230,8 +230,8 @@ export default function Bills() {
 
       {/* Add Expense Dialog */}
       {selectedGroup && (
-        <AddExpenseDialog 
-          open={showAddExpenseDialog} 
+        <AddExpenseDialog
+          open={showAddExpenseDialog}
           onOpenChange={(open) => {
             setShowAddExpenseDialog(open);
             if (!open) setAddExpenseGroupId(null);

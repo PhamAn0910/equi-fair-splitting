@@ -22,10 +22,10 @@ import {
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useUser();
-  
+
   const { groups, createGroup, addMember, removeMember, getActiveGroup, setActiveGroup } = useGroupStore();
   const { expenses, getGroupBalances, getGroupTotalSpend } = useExpenseStore();
-  
+
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [newMemberName, setNewMemberName] = useState('');
@@ -42,7 +42,7 @@ export default function Dashboard() {
       const group = groups.find(g => g.id === expense.groupId);
       const payer = group?.members.find(m => m.id === expense.payerId);
       const diffDays = Math.floor((Date.now() - new Date(expense.date).getTime()) / (1000 * 60 * 60 * 24));
-      
+
       return {
         description: expense.description,
         paidBy: payer?.name || 'Unknown',
@@ -114,9 +114,9 @@ export default function Dashboard() {
             </h1>
           </div>
           {user?.imageUrl ? (
-            <img 
-              src={user.imageUrl} 
-              alt={user.firstName || 'User'} 
+            <img
+              src={user.imageUrl}
+              alt={user.firstName || 'User'}
               className="w-12 h-12 rounded-full object-cover cursor-pointer"
               onClick={() => navigate('/account')}
             />
@@ -136,7 +136,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold text-foreground">Active Trip</h2>
             {hasGroups && (
-              <button 
+              <button
                 onClick={() => navigate('/groups')}
                 className="text-sm text-accent font-medium hover:underline"
               >
@@ -155,7 +155,7 @@ export default function Dashboard() {
               onClick={() => navigate(`/group/${activeGroup.id}`)}
             />
           ) : (
-            <div 
+            <div
               onClick={() => setShowCreateGroup(true)}
               className="border-2 border-dashed border-border rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
             >
@@ -188,7 +188,7 @@ export default function Dashboard() {
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold text-foreground">Recent Activity</h2>
-            <button 
+            <button
               onClick={() => navigate('/bills')}
               className="text-sm text-accent font-medium hover:underline"
             >
@@ -242,8 +242,8 @@ export default function Dashboard() {
                   onKeyDown={(e) => e.key === 'Enter' && handleCreateGroup()}
                 />
               </div>
-              <Button 
-                onClick={handleCreateGroup} 
+              <Button
+                onClick={handleCreateGroup}
                 className="w-full"
                 disabled={!newGroupName.trim()}
               >
@@ -276,7 +276,7 @@ export default function Dashboard() {
                         {memberName.slice(0, 2).toUpperCase()}
                       </div>
                       <span className="flex-1 font-medium">{memberName}</span>
-                      <button 
+                      <button
                         onClick={() => handleRemoveMember(index)}
                         className="text-muted-foreground hover:text-destructive transition-colors"
                       >
@@ -295,7 +295,7 @@ export default function Dashboard() {
                   onChange={(e) => setNewMemberName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleAddMember()}
                 />
-                <Button 
+                <Button
                   onClick={handleAddMember}
                   variant="secondary"
                   disabled={!newMemberName.trim()}
@@ -304,8 +304,8 @@ export default function Dashboard() {
                 </Button>
               </div>
 
-              <Button 
-                onClick={handleFinishSetup} 
+              <Button
+                onClick={handleFinishSetup}
                 className="w-full"
               >
                 Start Splitting
