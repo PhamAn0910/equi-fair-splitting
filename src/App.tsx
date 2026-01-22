@@ -13,6 +13,7 @@ import Groups from "./pages/Groups";
 import Bills from "./pages/Bills";
 import Settlement from "./pages/Settlement";
 import BillDetail from "./pages/BillDetail";
+import Analytics from "./pages/Analytics";
 import Account from "./pages/Account";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -39,33 +40,34 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <LemonSqueezyInit />
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Index />} />
-          <Route path="/scan" element={<ScanPaint />} />
-          
-          {/* Protected Routes - Require Authentication */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/group/:groupId" element={<GroupDetail />} />
-            <Route path="/groups" element={<Groups />} />
-            <Route path="/bills" element={<Bills />} />
-            <Route path="/settle" element={<Settlement />} />
-            <Route path="/bill/:billId" element={<BillDetail />} />
-            <Route path="/account" element={<Account />} />
-            <Route path="/settings" element={<Settings />} />
-          </Route>
-          
-          {/* Catch-all */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <LemonSqueezyInit />
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Index />} />
+            <Route path="/scan" element={<ScanPaint />} />
+
+            {/* Protected Routes - Require Authentication */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/group/:groupId" element={<GroupDetail />} />
+              <Route path="/groups" element={<Groups />} />
+              <Route path="/bills" element={<Bills />} />
+              <Route path="/settle" element={<Settlement />} />
+              <Route path="/bill/:billId" element={<BillDetail />} />
+              <Route path="/account" element={<Account />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/analytics" element={<Analytics />} />
+            </Route>
+
+            {/* Catch-all */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 };
 
