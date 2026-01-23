@@ -22,11 +22,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const userId = req.query.userId as string;
-
-  if (!userId) {
-    return res.status(400).json({ error: 'Missing userId' });
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ error: 'Missing Authorization header' });
   }
+
+  const token = authHeader.replace('Bearer ', '');
+  const supabaseUrl = process.env.VITE_SUPABASE_URL!;
+  const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY!;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Missing Supabase environment variables');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
+  // Create a Supabase client with the user's token to verify identity
+  const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  // Verify the token and get the user
+  const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+
+  if (authError || !user) {
+    console.warn('Portal auth failed:', authError);
+    return res.status(401).json({ error: 'Unauthorized: Invalid token' });
+  }
+
+  const userId = user.id;
 
   try {
     // Get user's subscription from database

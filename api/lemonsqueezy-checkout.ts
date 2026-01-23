@@ -1,5 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { lemonSqueezySetup, createCheckout } from '@lemonsqueezy/lemonsqueezy.js';
+import { createClient } from '@supabase/supabase-js';
 
 const LEMONSQUEEZY_API_KEY = process.env.LEMONSQUEEZY_API_KEY!;
 const STORE_ID = process.env.VITE_LEMONSQUEEZY_STORE_ID!;
@@ -16,11 +17,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { variantId, userId, email } = req.body;
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ error: 'Missing Authorization header' });
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+  const supabaseUrl = process.env.VITE_SUPABASE_URL!;
+  const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY!;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Missing Supabase environment variables');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
+  // Create a Supabase client with the user's token to verify identity
+  const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  // Verify the token and get the user
+  const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+
+  if (authError || !user) {
+    console.warn('Checkout auth failed:', authError);
+    return res.status(401).json({ error: 'Unauthorized: Invalid token' });
+  }
+
+  const userId = user.id;
+  // Use email from auth if not provided (though body email might be preferred for billing)
+  // We'll prioritize the body email for billing notifications, but the userId MUST match the token.
+  const { variantId, email } = req.body;
 
   // Validate required fields
-  if (!userId || !variantId) {
-    return res.status(400).json({ error: 'Missing userId or variantId' });
+  if (!variantId) {
+    return res.status(400).json({ error: 'Missing variantId' });
   }
 
   try {
@@ -40,9 +75,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       variantId,
       {
         checkoutData: {
-          email,
+          email: email || user.email, // Fallback to auth email
           custom: {
-            user_id: userId, // Critical: Used for webhook reconciliation (use snake_case)
+            user_id: userId, // Critical: Used for webhook reconciliation
           },
         },
         productOptions: {

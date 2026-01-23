@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser, useAuth } from '@clerk/clerk-react';
 import {
   Dialog,
   DialogContent,
@@ -45,6 +45,7 @@ export function UpgradeDialog({
   trialEndsAt,
 }: UpgradeDialogProps) {
   const { user } = useUser();
+  const { getToken } = useAuth();
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
@@ -55,9 +56,13 @@ export function UpgradeDialog({
     setIsLoading(planId);
 
     try {
+      const token = await getToken();
       const response = await fetch('/api/lemonsqueezy-checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           variantId,
           userId: user.id,
@@ -96,7 +101,14 @@ export function UpgradeDialog({
     try {
       // Option 1: Try to get portal URL from API (if available)
       try {
-        const response = await fetch(`/api/lemonsqueezy-portal?userId=${user.id}`);
+        const token = await getToken();
+        // Option 1: Try to get portal URL from API (if available)
+        // No need to pass userId as query param anymore, it's extracted from the token
+        const response = await fetch('/api/lemonsqueezy-portal', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
 
         if (response.ok) {
           const { portalUrl } = await response.json();
@@ -171,8 +183,8 @@ export function UpgradeDialog({
             <div
               key={plan.id}
               className={`relative border rounded-xl p-4 transition-colors ${plan.popular
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-primary/50'
+                ? 'border-primary bg-primary/5'
+                : 'border-border hover:border-primary/50'
                 }`}
             >
               {plan.popular && (
