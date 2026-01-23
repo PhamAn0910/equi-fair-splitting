@@ -3,8 +3,10 @@ import { lemonSqueezySetup, getSubscription } from '@lemonsqueezy/lemonsqueezy.j
 import { createClient } from '@supabase/supabase-js';
 
 const LEMONSQUEEZY_API_KEY = process.env.LEMONSQUEEZY_API_KEY!;
+// Initialize Lemon Squeezy SDK
 const supabaseUrl = process.env.VITE_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY!;
+const jwtSecret = process.env.SUPABASE_JWT_SECRET!;
 
 // Initialize Lemon Squeezy SDK
 lemonSqueezySetup({ apiKey: LEMONSQUEEZY_API_KEY });
@@ -15,6 +17,54 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
     persistSession: false,
   },
 });
+
+async function verifyAuthToken(token: string, supabaseClient: any) {
+  // First try standard Supabase auth
+  const { data: { user }, error } = await supabaseClient.auth.getUser();
+
+  if (!error && user) {
+    return user;
+  }
+
+  // If error is strictly about JWT claims (like UUID validation), try manual verification
+  if (error && jwtSecret) {
+    try {
+      // Manual JWT Verification
+      const [header, payload, signature] = token.split('.');
+      if (!header || !payload || !signature) throw new Error('Invalid token format');
+
+      const signatureInput = `${header}.${payload}`;
+      const hmac = crypto.createHmac('sha256', jwtSecret);
+      const calculatedSignature = hmac.update(signatureInput).digest('base64url');
+
+      if (signature !== calculatedSignature) {
+        throw new Error('Invalid signature');
+      }
+
+      // Decode payload
+      const decodedPayload = JSON.parse(Buffer.from(payload, 'base64url').toString('utf-8'));
+
+      // Check expiration
+      if (decodedPayload.exp && Date.now() >= decodedPayload.exp * 1000) {
+        throw new Error('Token expired');
+      }
+
+      // Return synthetic user object
+      return {
+        id: decodedPayload.sub,
+        email: decodedPayload.email,
+        app_metadata: decodedPayload.app_metadata || {},
+        user_metadata: decodedPayload.user_metadata || {},
+        aud: decodedPayload.aud,
+        created_at: new Date().toISOString(),
+      };
+    } catch (manualVerifyError) {
+      console.warn('Manual JWT verification failed:', manualVerifyError);
+    }
+  }
+
+  return null;
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Only allow GET requests
@@ -36,7 +86,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: 'Server configuration error' });
   }
 
-  // Create a Supabase client with the user's token to verify identity
+  // Create a Supabase client with the user's token (still useful for RLS context)
   const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
     global: {
       headers: {
@@ -45,11 +95,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     },
   });
 
-  // Verify the token and get the user
-  const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+  // Verify the token using our hybrid helper
+  const user = await verifyAuthToken(token, supabaseClient);
 
-  if (authError || !user) {
-    console.warn('Portal auth failed:', authError);
+  if (!user) {
+    console.warn('Portal auth failed: Invalid token or user');
     return res.status(401).json({ error: 'Unauthorized: Invalid token' });
   }
 

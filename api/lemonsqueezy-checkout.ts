@@ -6,9 +6,12 @@ const LEMONSQUEEZY_API_KEY = process.env.LEMONSQUEEZY_API_KEY!;
 const STORE_ID = process.env.VITE_LEMONSQUEEZY_STORE_ID!;
 const APP_URL = process.env.VITE_APP_URL || 'http://localhost:5173';
 
+import crypto from 'crypto';
+
 // Initialize Lemon Squeezy SDK
 const supabaseUrl = process.env.VITE_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY!;
+const jwtSecret = process.env.SUPABASE_JWT_SECRET!;
 
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
@@ -18,6 +21,56 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
 });
 
 lemonSqueezySetup({ apiKey: LEMONSQUEEZY_API_KEY });
+
+async function verifyAuthToken(token: string, supabaseClient: any) {
+  // First try standard Supabase auth
+  const { data: { user }, error } = await supabaseClient.auth.getUser();
+
+  if (!error && user) {
+    return user;
+  }
+
+  // If error is strictly about JWT claims (like UUID validation), try manual verification
+  // This is needed because Clerk user IDs are not UUIDs (e.g. "user_2...")
+  // but Supabase's GoTrue client strictly enforces UUID format for 'sub' claim
+  if (error && jwtSecret) {
+    try {
+      // Manual JWT Verification
+      const [header, payload, signature] = token.split('.');
+      if (!header || !payload || !signature) throw new Error('Invalid token format');
+
+      const signatureInput = `${header}.${payload}`;
+      const hmac = crypto.createHmac('sha256', jwtSecret);
+      const calculatedSignature = hmac.update(signatureInput).digest('base64url');
+
+      if (signature !== calculatedSignature) {
+        throw new Error('Invalid signature');
+      }
+
+      // Decode payload
+      const decodedPayload = JSON.parse(Buffer.from(payload, 'base64url').toString('utf-8'));
+
+      // Check expiration
+      if (decodedPayload.exp && Date.now() >= decodedPayload.exp * 1000) {
+        throw new Error('Token expired');
+      }
+
+      // Return synthetic user object
+      return {
+        id: decodedPayload.sub,
+        email: decodedPayload.email,
+        app_metadata: decodedPayload.app_metadata || {},
+        user_metadata: decodedPayload.user_metadata || {},
+        aud: decodedPayload.aud,
+        created_at: new Date().toISOString(),
+      };
+    } catch (manualVerifyError) {
+      console.warn('Manual JWT verification failed:', manualVerifyError);
+    }
+  }
+
+  return null;
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Only allow POST requests
@@ -38,7 +91,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: 'Server configuration error' });
   }
 
-  // Create a Supabase client with the user's token to verify identity
+  // Create a Supabase client with the user's token (still useful for context)
   const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
     global: {
       headers: {
@@ -47,11 +100,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     },
   });
 
-  // Verify the token and get the user
-  const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+  // Verify the token (supports both Supabase UUIDs and Clerk IDs via manual verify)
+  const user = await verifyAuthToken(token, supabaseClient);
 
-  if (authError || !user) {
-    console.warn('Checkout auth failed:', authError);
+  if (!user) {
+    console.warn('Checkout auth failed: Invalid token or user');
     return res.status(401).json({ error: 'Unauthorized: Invalid token' });
   }
 
