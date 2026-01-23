@@ -40,17 +40,17 @@ function verifySignature(rawBody: Buffer, signature: string, secret: string): bo
 // Helper to determine plan type from variant ID
 function getPlanType(variantId: string | number | undefined): 'free' | 'pro' {
   if (!variantId) return 'free';
-  
+
   const variantStr = String(variantId);
   const proVariantId = String(process.env.LEMONSQUEEZY_PRO_VARIANT_ID || '');
-  
+
   console.log('getPlanType - variantId:', variantStr, 'proVariantId:', proVariantId);
-  
+
   if (proVariantId && variantStr === proVariantId) return 'pro';
-  
+
   // If variant exists but doesn't match env vars, default to pro (they paid for something)
   if (variantStr && variantStr !== '') return 'pro';
-  
+
   return 'free';
 }
 
@@ -100,7 +100,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         console.log('order_created - variantId:', variantId, 'planType:', planType);
 
-        await supabaseAdmin.from('user_subscriptions').upsert({
+        const { error: orderError } = await supabaseAdmin.from('user_subscriptions').upsert({
           user_id: userId,
           lemonsqueezy_order_id: data.id,
           lemonsqueezy_customer_id: order.customer_id,
@@ -108,6 +108,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           plan_type: planType,
           status: 'active',
         }, { onConflict: 'user_id', ignoreDuplicates: true });
+
+        if (orderError) {
+          console.error('Supabase error (order_created):', orderError);
+          throw new Error(`Database error: ${orderError.message}`);
+        }
         break;
       }
 
@@ -122,7 +127,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.log('subscription_created - variantId:', variantId, 'planType:', planType, 'status:', subscription.status, 'orderId:', orderId);
 
         console.log('SAVING SUB ID:', data.id);
-        await supabaseAdmin.from('user_subscriptions').upsert({
+        const { error: subError } = await supabaseAdmin.from('user_subscriptions').upsert({
           user_id: userId,
           lemonsqueezy_subscription_id: data.id,
           lemonsqueezy_order_id: orderId,
@@ -133,22 +138,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           current_period_end: subscription.renews_at,
           trial_ends_at: subscription.trial_ends_at,
         }, { onConflict: 'user_id' });
+
+        if (subError) {
+          console.error('Supabase error (subscription_created):', subError);
+          throw new Error(`Database error: ${subError.message}`);
+        }
         break;
       }
 
       case 'subscription_updated': {
         // Handle subscription updates (e.g., user cancels but still in trial/paid period)
         const subscription = data.attributes;
-        
+
         console.log('subscription_updated - status:', subscription.status, 'ends_at:', subscription.ends_at, 'trial_ends_at:', subscription.trial_ends_at);
-        
+
         // Get current subscription to check if it was cancelled
         const { data: currentSub } = await supabaseAdmin
           .from('user_subscriptions')
           .select('cancelled_at, plan_type')
           .eq('lemonsqueezy_subscription_id', data.id)
           .single();
-        
+
         // Build update data
         const updateData: {
           status: string;
@@ -161,7 +171,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           current_period_end: subscription.renews_at,
           trial_ends_at: subscription.trial_ends_at,
         };
-        
+
         // Preserve cancelled_at if subscription is still cancelled
         // Only clear it if subscription is no longer cancelled
         if (subscription.status === 'cancelled' && currentSub?.cancelled_at) {
@@ -171,7 +181,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           // Clear cancelled_at if subscription is active again
           updateData.cancelled_at = null;
         }
-        
+
         // Explicit payment success verification: If trial ended and subscription is now active,
         // ensure plan_type is 'pro' (trial ended successfully, payment succeeded)
         if (subscription.status === 'active' && !subscription.trial_ends_at && currentSub?.plan_type !== 'pro') {
@@ -179,14 +189,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           updateData.plan_type = 'pro';
           console.log('Trial ended successfully, payment succeeded - setting plan_type to pro');
         }
-        
+
         // Update subscription details but DON'T downgrade yet
         // User may have cancelled but still has time left in trial/paid period
         await supabaseAdmin
           .from('user_subscriptions')
           .update(updateData)
           .eq('lemonsqueezy_subscription_id', data.id);
-        
+
         break;
       }
 
@@ -194,9 +204,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // User cancelled subscription but may still have access until period ends
         // DO NOT downgrade immediately - wait for subscription_expired event
         const subscription = data.attributes;
-        
+
         console.log('subscription_cancelled - userId:', userId, 'subscription_id:', data.id);
-        
+
         await supabaseAdmin
           .from('user_subscriptions')
           .update({
@@ -204,7 +214,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             cancelled_at: new Date().toISOString(),
           })
           .eq('lemonsqueezy_subscription_id', data.id);
-        
+
         console.log('Subscription marked as cancelled, access maintained until expiration');
         break;
       }
@@ -213,13 +223,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // This is the definitive signal to downgrade
         // Fired when trial ends without payment OR paid period ends after cancellation
         const subscription = data.attributes;
-        
+
         console.log('subscription_expired - userId:', userId, 'downgrading to free plan');
-        
+
         // Check if ends_at is in the past (safety check)
         const endsAt = subscription.ends_at ? new Date(subscription.ends_at) : new Date();
         const now = new Date();
-        
+
         if (endsAt <= now) {
           // Downgrade to free plan
           await supabaseAdmin
@@ -231,7 +241,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               trial_ends_at: null,
             })
             .eq('lemonsqueezy_subscription_id', data.id);
-          
+
           console.log('User downgraded to free plan successfully');
         } else {
           console.log('Subscription not yet expired, keeping current plan until:', endsAt);
@@ -244,12 +254,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Mark as payment failed but don't downgrade yet
         // Wait for subscription_expired event
         console.log('subscription_payment_failed - userId:', userId, 'subscription_id:', data.id);
-        
+
         await supabaseAdmin
           .from('user_subscriptions')
           .update({ status: 'past_due' })
           .eq('lemonsqueezy_subscription_id', data.id);
-        
+
         console.log('Subscription marked as past_due, waiting for expiration event');
         break;
       }
