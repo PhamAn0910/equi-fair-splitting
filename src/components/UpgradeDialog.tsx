@@ -97,7 +97,7 @@ export function UpgradeDialog({
       // Option 1: Try to get portal URL from API (if available)
       try {
         const response = await fetch(`/api/lemonsqueezy-portal?userId=${user.id}`);
-        
+
         if (response.ok) {
           const { portalUrl } = await response.json();
           window.open(portalUrl, '_blank');
@@ -129,7 +129,7 @@ export function UpgradeDialog({
 
   const maxScans = planType === 'free' ? 2 : 50;
   const scanPeriod = isLifetimeScans ? 'lifetime' : 'today';
-  
+
   // Check if user is in trial period
   const isInTrial = trialEndsAt && new Date(trialEndsAt) > new Date();
   const isCancelled = cancelledAt !== null;
@@ -154,13 +154,13 @@ export function UpgradeDialog({
             <p className="text-sm text-muted-foreground">
               You've used{' '}
               <span className="font-bold text-foreground">
-                {currentScans}/{maxScans}
+                {Math.min(currentScans, maxScans)}/{maxScans}
               </span>{' '}
               scans {scanPeriod}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              {planType === 'free' 
-                ? 'Get 3-day free trial with Pro subscription' 
+              {planType === 'free'
+                ? 'Get 3-day free trial with Pro subscription'
                 : 'Resets at midnight'} • Current plan:{' '}
               <span className="capitalize font-medium">{planType}</span>
             </p>
@@ -170,11 +170,10 @@ export function UpgradeDialog({
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className={`relative border rounded-xl p-4 transition-colors ${
-                plan.popular
+              className={`relative border rounded-xl p-4 transition-colors ${plan.popular
                   ? 'border-primary bg-primary/5'
                   : 'border-border hover:border-primary/50'
-              }`}
+                }`}
             >
               {plan.popular && (
                 <div className="absolute -top-2.5 left-4 px-2 py-0.5 bg-primary text-primary-foreground text-xs font-medium rounded-full">
@@ -195,9 +194,8 @@ export function UpgradeDialog({
                   </p>
                 </div>
                 <Zap
-                  className={`w-5 h-5 ${
-                    plan.popular ? 'text-primary' : 'text-amber-500'
-                  }`}
+                  className={`w-5 h-5 ${plan.popular ? 'text-primary' : 'text-amber-500'
+                    }`}
                 />
               </div>
 
@@ -219,12 +217,12 @@ export function UpgradeDialog({
                 {isLoading === plan.id
                   ? 'Loading...'
                   : planType === plan.id
-                  ? 'Current Plan'
-                  : !plan.variantId
-                  ? 'Coming Soon'
-                  : planType === 'free'
-                  ? 'Start 3-Day Free Trial'
-                  : `Upgrade to ${plan.name}`}
+                    ? 'Current Plan'
+                    : !plan.variantId
+                      ? 'Coming Soon'
+                      : planType === 'free'
+                        ? 'Start 3-Day Free Trial'
+                        : `Upgrade to ${plan.name}`}
               </Button>
             </div>
           ))}
@@ -253,14 +251,14 @@ export function UpgradeDialog({
           )}
 
           {/* Show cancelled status if subscription is cancelled */}
-          {isCancelled && (
+          {isCancelled && planType === 'pro' && (
             <div className="pt-4 border-t">
               <div className="p-3 bg-muted rounded-lg">
                 <p className="text-sm font-medium text-muted-foreground">
                   Subscription Cancelled
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {isInTrial 
+                  {isInTrial
                     ? `You'll keep Pro access until ${trialEndsAt ? new Date(trialEndsAt).toLocaleDateString() : 'trial ends'}.`
                     : 'Your subscription will remain active until the end of the current billing period.'}
                 </p>
@@ -280,13 +278,13 @@ export function UpgradeDialog({
             <AlertDialogDescription>
               {isInTrial ? (
                 <>
-                  You'll be redirected to Lemon Squeezy to cancel your trial. 
-                  You'll keep Pro access until {trialEndsAt ? new Date(trialEndsAt).toLocaleDateString() : 'the trial ends'}, 
+                  You'll be redirected to Lemon Squeezy to cancel your trial.
+                  You'll keep Pro access until {trialEndsAt ? new Date(trialEndsAt).toLocaleDateString() : 'the trial ends'},
                   and you won't be charged.
                 </>
               ) : (
                 <>
-                  You'll be redirected to Lemon Squeezy to cancel your subscription. 
+                  You'll be redirected to Lemon Squeezy to cancel your subscription.
                   You'll keep Pro access until the end of your current billing period.
                 </>
               )}

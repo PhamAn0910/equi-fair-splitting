@@ -12,11 +12,11 @@ export default function Account() {
   const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
   const { getToken, userId } = useAuth();
-  
+
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
-  
+
   const { subscription, todayScans, lifetimeScans, fetchSubscription, getTodayScans, getLifetimeScans } = useSubscriptionStore();
-  
+
   // Fetch subscription and scan count on mount
   useEffect(() => {
     if (userId && getToken) {
@@ -25,7 +25,7 @@ export default function Account() {
       getLifetimeScans(userId, getToken);
     }
   }, [userId, getToken, fetchSubscription, getTodayScans, getLifetimeScans]);
-  
+
   const planType = subscription?.planType || 'free';
 
   const handleSignOut = async () => {
@@ -43,9 +43,9 @@ export default function Account() {
       <header className="px-4 pt-6 pb-6 safe-top">
         <div className="flex items-center gap-4">
           {userImage ? (
-            <img 
-              src={userImage} 
-              alt={userName} 
+            <img
+              src={userImage}
+              alt={userName}
               className="w-16 h-16 rounded-full object-cover"
             />
           ) : (
@@ -75,9 +75,9 @@ export default function Account() {
                 {planType === 'free' ? 'Start 3-Day Free Trial' : `${planType.charAt(0).toUpperCase() + planType.slice(1)} Plan`}
               </p>
               <p className="text-sm text-muted-foreground">
-                {planType === 'free' 
-                  ? `${lifetimeScans}/2 scans used (lifetime)` 
-                  : `${todayScans}/50 scans used today`}
+                {planType === 'free'
+                  ? `${Math.min(lifetimeScans, 2)}/2 scans used (lifetime)`
+                  : `${Math.min(todayScans, 50)}/50 scans used today`}
               </p>
             </div>
           </div>
@@ -142,7 +142,7 @@ export default function Account() {
           <ChevronRight className="w-5 h-5 text-muted-foreground" />
         </button>
 
-        <button 
+        <button
           onClick={handleSignOut}
           className="w-full flex items-center gap-4 p-4 bg-card rounded-xl hover:bg-destructive/10 transition-colors mt-6"
         >
