@@ -67,10 +67,30 @@ export const useSubscriptionStore = create<SubscriptionStore>((set, get) => ({
       }
 
       if (data) {
+        // Calculate effective plan type based on status and dates
+        let planType = (data.plan_type || 'free') as PlanType;
+        const status = data.status || 'active';
+        const now = new Date();
+        const currentPeriodEnd = data.current_period_end ? new Date(data.current_period_end) : null;
+        const trialEndsAt = data.trial_ends_at ? new Date(data.trial_ends_at) : null;
+
+        // Downgrade to free if subscription is expired/cancelled and period has ended
+        if (planType === 'pro') {
+          if (status === 'expired') {
+            planType = 'free';
+          } else if (status === 'cancelled' && currentPeriodEnd && currentPeriodEnd < now) {
+            planType = 'free';
+          } else if (status === 'on_trial' && trialEndsAt && trialEndsAt < now) {
+            planType = 'free';
+            // Also update status to show trial ended if we strictly want to be accurate, 
+            // but for access control 'planType' is the key.
+          }
+        }
+
         set({
           subscription: {
-            planType: data.plan_type || 'free',
-            status: data.status || 'active',
+            planType,
+            status,
             currentPeriodEnd: data.current_period_end,
             trialEndsAt: data.trial_ends_at,
             cancelledAt: data.cancelled_at,
