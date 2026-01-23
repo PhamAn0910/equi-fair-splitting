@@ -7,7 +7,15 @@ const STORE_ID = process.env.VITE_LEMONSQUEEZY_STORE_ID!;
 const APP_URL = process.env.VITE_APP_URL || 'http://localhost:5173';
 
 // Initialize Lemon Squeezy SDK
-import { supabaseAdmin } from './_lib/supabase-admin';
+const supabaseUrl = process.env.VITE_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY!;
+
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false,
+  },
+});
 
 lemonSqueezySetup({ apiKey: LEMONSQUEEZY_API_KEY });
 
@@ -23,7 +31,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const token = authHeader.replace('Bearer ', '');
-  const supabaseUrl = process.env.VITE_SUPABASE_URL!;
   const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY!;
 
   if (!supabaseUrl || !supabaseAnonKey) {
