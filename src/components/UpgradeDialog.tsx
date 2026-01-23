@@ -56,7 +56,7 @@ export function UpgradeDialog({
     setIsLoading(planId);
 
     try {
-      const token = await getToken();
+      const token = await getToken({ template: 'supabase' });
       const response = await fetch('/api/lemonsqueezy-checkout', {
         method: 'POST',
         headers: {
@@ -101,7 +101,7 @@ export function UpgradeDialog({
     try {
       // Option 1: Try to get portal URL from API (if available)
       try {
-        const token = await getToken();
+        const token = await getToken({ template: 'supabase' });
         // Option 1: Try to get portal URL from API (if available)
         // No need to pass userId as query param anymore, it's extracted from the token
         const response = await fetch('/api/lemonsqueezy-portal', {
