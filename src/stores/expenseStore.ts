@@ -45,27 +45,27 @@ interface ExpenseState {
   expenses: Expense[];
   isLoading: boolean;
   error: string | null;
-  
+
   // Auth
   supabase: SupabaseClientType | null;
   realtimeChannel: RealtimeChannel | null;
   getToken: GetTokenFn | null;
-  
+
   // Init & Cleanup
   initialize: (getToken: GetTokenFn, groupIds: string[]) => Promise<void>;
   cleanup: () => void;
-  
+
   // Data fetching
   fetchExpenses: (groupIds: string[]) => Promise<void>;
   setExpenses: (expenses: Expense[]) => void;
-  
+
   // Actions
   addExpense: (expense: Omit<Expense, 'id'>) => Promise<Expense | null>;
   updateExpense: (expenseId: string, updates: Partial<Expense>) => Promise<boolean>;
   deleteExpense: (expenseId: string) => Promise<boolean>;
   deleteExpensesByGroup: (groupId: string) => void;
   getExpensesByGroup: (groupId: string) => Expense[];
-  
+
   // Balance calculations
   getMemberBalance: (groupId: string, memberId: string) => number;
   getGroupBalances: (groupId: string) => Record<string, number>;
@@ -89,31 +89,31 @@ export function calculateSplits(
         calculatedAmount: equalShare,
       }));
     }
-    
+
     case 'shares': {
       const totalShares = splits.reduce((sum, s) => sum + s.value, 0);
       if (totalShares === 0) return splits.map(s => ({ ...s, calculatedAmount: 0 }));
-      
+
       return splits.map(s => ({
         ...s,
         calculatedAmount: (s.value / totalShares) * totalAmount,
       }));
     }
-    
+
     case 'percentage': {
       return splits.map(s => ({
         ...s,
         calculatedAmount: (s.value / 100) * totalAmount,
       }));
     }
-    
+
     case 'amounts': {
       return splits.map(s => ({
         ...s,
         calculatedAmount: s.value,
       }));
     }
-    
+
     default:
       return splits.map(s => ({ ...s, calculatedAmount: 0 }));
   }

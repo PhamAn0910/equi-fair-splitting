@@ -1,6 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { lemonSqueezySetup, getSubscription } from '@lemonsqueezy/lemonsqueezy.js';
 import { createClient } from '@supabase/supabase-js';
+import { createHmac } from 'crypto';
 
 const LEMONSQUEEZY_API_KEY = process.env.LEMONSQUEEZY_API_KEY!;
 // Initialize Lemon Squeezy SDK
@@ -34,7 +35,7 @@ async function verifyAuthToken(token: string, supabaseClient: any) {
       if (!header || !payload || !signature) throw new Error('Invalid token format');
 
       const signatureInput = `${header}.${payload}`;
-      const hmac = crypto.createHmac('sha256', jwtSecret);
+      const hmac = createHmac('sha256', jwtSecret);
       const calculatedSignature = hmac.update(signatureInput).digest('base64url');
 
       if (signature !== calculatedSignature) {

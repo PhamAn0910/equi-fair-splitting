@@ -117,7 +117,7 @@ Respond ONLY with a valid JSON object matching this structure.`;
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           console.error('OpenRouter API error:', response.status, errorData);
-          
+
           if (response.status === 429) {
             throw new Error('Rate limit exceeded. Please try again later.');
           }
@@ -206,7 +206,7 @@ Respond ONLY with a valid JSON object matching this structure.`;
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           console.error('Gemini API error:', response.status, errorData);
-          
+
           if (response.status === 429) {
             throw new Error('Rate limit exceeded. Please try again later.');
           }
@@ -242,7 +242,7 @@ Respond ONLY with a valid JSON object matching this structure.`;
       }
 
       const rawItems = result.items;
-      
+
       // Add unique IDs to each item
       const items: ExpenseItem[] = rawItems.map((item: any, index: number) => ({
         id: `item-${Date.now()}-${index}`,
@@ -262,7 +262,7 @@ Respond ONLY with a valid JSON object matching this structure.`;
       const subtotal = result.subtotal || items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
       console.log('Parsed receipt data:', { items, fees, subtotal });
-      
+
       if (items.length === 0) {
         toast.warning('No items found in receipt. Try a clearer image.');
       } else {

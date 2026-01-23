@@ -6,7 +6,7 @@ const LEMONSQUEEZY_API_KEY = process.env.LEMONSQUEEZY_API_KEY!;
 const STORE_ID = process.env.VITE_LEMONSQUEEZY_STORE_ID!;
 const APP_URL = process.env.VITE_APP_URL || 'http://localhost:5173';
 
-import crypto from 'crypto';
+import { createHmac } from 'crypto';
 
 // Initialize Lemon Squeezy SDK
 const supabaseUrl = process.env.VITE_SUPABASE_URL!;
@@ -40,7 +40,7 @@ async function verifyAuthToken(token: string, supabaseClient: any) {
       if (!header || !payload || !signature) throw new Error('Invalid token format');
 
       const signatureInput = `${header}.${payload}`;
-      const hmac = crypto.createHmac('sha256', jwtSecret);
+      const hmac = createHmac('sha256', jwtSecret);
       const calculatedSignature = hmac.update(signatureInput).digest('base64url');
 
       if (signature !== calculatedSignature) {
