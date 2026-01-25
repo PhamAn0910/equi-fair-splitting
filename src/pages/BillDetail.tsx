@@ -5,7 +5,6 @@ import { useExpenseStore } from '@/stores/expenseStore';
 import { useGroupStore } from '@/stores/groupStore';
 import { MemberAvatar } from '@/components/MemberAvatar';
 import { formatCurrency } from '@/lib/constants';
-import { BottomNav } from '@/components/BottomNav';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -47,7 +46,6 @@ export default function BillDetail() {
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 pb-24">
         <p className="text-muted-foreground mb-4">Bill not found</p>
         <Button onClick={() => navigate(-1)}>Go Back</Button>
-        <BottomNav />
       </div>
     );
   }
@@ -280,8 +278,6 @@ export default function BillDetail() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <BottomNav />
     </div>
   );
 }

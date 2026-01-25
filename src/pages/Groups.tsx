@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Users, X } from 'lucide-react';
 import { useGroupStore } from '@/stores/groupStore';
 import { useExpenseStore } from '@/stores/expenseStore';
-import { BottomNav } from '@/components/BottomNav';
 import { MemberAvatar } from '@/components/MemberAvatar';
 import { formatCurrency, getGroupColor } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
@@ -123,7 +122,7 @@ export default function Groups() {
                     </div>
                   )}
                 </div>
-                <p 
+                <p
                   className="text-sm font-medium"
                   style={{ color: yourBalance === 0 ? undefined : yourBalance >= 0 ? '#3b761f' : 'rgb(231, 110, 80)' }}
                 >
@@ -135,7 +134,7 @@ export default function Groups() {
         })}
 
         {groups.length === 0 && (
-          <div 
+          <div
             onClick={() => setShowCreateGroup(true)}
             className="border-2 border-dashed border-border rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
           >
@@ -157,8 +156,6 @@ export default function Groups() {
       >
         <Plus className="w-6 h-6" />
       </button>
-
-      <BottomNav />
 
       {/* Create Group Dialog */}
       <Dialog open={showCreateGroup} onOpenChange={(open) => !open && handleCloseDialog()}>
@@ -182,8 +179,8 @@ export default function Groups() {
                   onKeyDown={(e) => e.key === 'Enter' && handleCreateGroup()}
                 />
               </div>
-              <Button 
-                onClick={handleCreateGroup} 
+              <Button
+                onClick={handleCreateGroup}
                 className="w-full"
                 disabled={!newGroupName.trim()}
               >
@@ -216,7 +213,7 @@ export default function Groups() {
                         {memberName.slice(0, 2).toUpperCase()}
                       </div>
                       <span className="flex-1 font-medium">{memberName}</span>
-                      <button 
+                      <button
                         onClick={() => handleRemoveMember(index)}
                         className="text-muted-foreground hover:text-destructive transition-colors"
                       >
@@ -235,7 +232,7 @@ export default function Groups() {
                   onChange={(e) => setNewMemberName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleAddMember()}
                 />
-                <Button 
+                <Button
                   onClick={handleAddMember}
                   variant="secondary"
                   disabled={!newMemberName.trim()}
@@ -244,8 +241,8 @@ export default function Groups() {
                 </Button>
               </div>
 
-              <Button 
-                onClick={handleFinishSetup} 
+              <Button
+                onClick={handleFinishSetup}
                 className="w-full"
               >
                 Start Splitting

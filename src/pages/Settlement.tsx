@@ -5,7 +5,6 @@ import { useGroupStore } from '@/stores/groupStore';
 import { useExpenseStore } from '@/stores/expenseStore';
 import { SettlementGraph } from '@/components/SettlementGraph';
 import { SettlementCard, type Settlement as SettlementType } from '@/components/SettlementCard';
-import { BottomNav } from '@/components/BottomNav';
 import { formatCurrency } from '@/lib/constants';
 import {
   DropdownMenu,
@@ -85,7 +84,6 @@ export default function Settlement() {
         >
           Create a group first
         </button>
-        <BottomNav />
       </div>
     );
   }
@@ -277,8 +275,6 @@ export default function Settlement() {
           </section>
         )}
       </main>
-
-      <BottomNav />
     </div>
   );
 }

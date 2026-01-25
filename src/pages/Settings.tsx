@@ -1,4 +1,3 @@
-import { BottomNav } from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -40,7 +39,7 @@ export default function Settings() {
             <Brain className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-semibold text-foreground">OCR Model Selection</h2>
           </div>
-          
+
           <p className="text-sm text-muted-foreground mb-6">
             Choose which AI model to use for scanning receipts and invoices. You can switch between models to compare accuracy.
           </p>
@@ -93,8 +92,6 @@ export default function Settings() {
           </div>
         </Card>
       </main>
-
-      <BottomNav />
     </div>
   );
 }

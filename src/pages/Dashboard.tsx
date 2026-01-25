@@ -7,7 +7,6 @@ import { useExpenseStore } from '@/stores/expenseStore';
 import { BalanceCard } from '@/components/BalanceCard';
 import { QuickActionButton } from '@/components/QuickActionButton';
 import { ActivityItem } from '@/components/ActivityItem';
-import { BottomNav } from '@/components/BottomNav';
 import { FloatingAddButton } from '@/components/FloatingAddButton';
 import { MemberAvatar } from '@/components/MemberAvatar';
 import { Button } from '@/components/ui/button';
@@ -216,9 +215,6 @@ export default function Dashboard() {
 
       {/* Floating Add Button */}
       <FloatingAddButton onClick={() => setShowCreateGroup(true)} />
-
-      {/* Bottom Navigation */}
-      <BottomNav />
 
       {/* Create Group Dialog */}
       <Dialog open={showCreateGroup} onOpenChange={(open) => !open && handleCloseDialog()}>

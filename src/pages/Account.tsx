@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { BottomNav } from '@/components/BottomNav';
 import { MemberAvatar } from '@/components/MemberAvatar';
 import { UpgradeDialog } from '@/components/UpgradeDialog';
 import { useSubscriptionStore } from '@/stores/subscriptionStore';
@@ -166,8 +165,6 @@ export default function Account() {
         cancelledAt={subscription?.cancelledAt}
         trialEndsAt={subscription?.trialEndsAt}
       />
-
-      <BottomNav />
     </div>
   );
 }

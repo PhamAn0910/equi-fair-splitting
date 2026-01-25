@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { BottomNav } from '@/components/BottomNav';
 import { useGroupStore } from '@/stores/groupStore';
 import { useExpenseStore } from '@/stores/expenseStore';
 import { formatCurrency, getGroupColor } from '@/lib/constants';
@@ -239,8 +238,6 @@ export default function Bills() {
           group={selectedGroup}
         />
       )}
-
-      <BottomNav />
     </div>
   );
 }

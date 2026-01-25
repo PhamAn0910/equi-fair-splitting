@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useSyncManager } from "@/hooks/useSyncManager";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import { ResponsiveLayout } from "./components/layout/ResponsiveLayout";
 import Index from "./pages/Index";
 import ScanPaint from "./pages/ScanPaint";
 import GroupDetail from "./pages/GroupDetail";
@@ -47,19 +48,22 @@ const App = () => {
           <LemonSqueezyInit />
           <Routes>
             {/* Public Routes */}
-            <Route path="/" element={<Index />} />
             <Route path="/scan" element={<ScanPaint />} />
 
             {/* Protected Routes - Require Authentication */}
             <Route element={<ProtectedRoute />}>
-              <Route path="/group/:groupId" element={<GroupDetail />} />
-              <Route path="/groups" element={<Groups />} />
-              <Route path="/bills" element={<Bills />} />
-              <Route path="/settle" element={<Settlement />} />
-              <Route path="/bill/:billId" element={<BillDetail />} />
-              <Route path="/account" element={<Account />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/analytics" element={<Analytics />} />
+              <Route element={<ResponsiveLayout />}>
+                <Route path="/" element={<Index />} />
+                <Route path="/group/:groupId" element={<GroupDetail />} />
+                <Route path="/groups" element={<Groups />} />
+                <Route path="/bills" element={<Bills />} />
+                <Route path="/bills/:billId" element={<BillDetail />} />
+                <Route path="/settle" element={<Settlement />} />
+                <Route path="/bill/:billId" element={<BillDetail />} />
+                <Route path="/account" element={<Account />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/analytics" element={<Analytics />} />
+              </Route>
             </Route>
 
             {/* Catch-all */}
@@ -72,3 +76,4 @@ const App = () => {
 };
 
 export default App;
+
