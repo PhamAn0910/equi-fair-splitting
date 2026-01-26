@@ -3,7 +3,7 @@ import { Sparkles, ArrowRight } from "lucide-react";
 
 const SmartSettlementSection = () => {
   return (
-    <section className="py-24 px-4 md:px-8 bg-background">
+    <div className="w-full">
       <div className="max-w-4xl mx-auto text-center mb-16">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
@@ -128,17 +128,16 @@ const SmartSettlementSection = () => {
         ].map((method, index) => (
           <div
             key={method.name}
-            className={`py-3 px-6 rounded-full text-center font-medium text-sm transition-all ${
-              method.active
-                ? "bg-secondary text-secondary-foreground shadow-md"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            }`}
+            className={`py-3 px-6 rounded-full text-center font-medium text-sm transition-all ${method.active
+              ? "bg-secondary text-secondary-foreground shadow-md"
+              : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
           >
             {method.name}
           </div>
         ))}
       </motion.div>
-    </section>
+    </div>
   );
 };
 

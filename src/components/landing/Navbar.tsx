@@ -34,10 +34,10 @@ const Navbar = () => {
           </a>
         </div>
         <a
-          href="#"
+          href="/app"
           className="ml-2 bg-foreground text-background px-6 py-2.5 rounded-full text-sm font-medium hover:scale-105 transition-transform"
         >
-          Download
+          Open App
         </a>
       </div>
     </motion.nav>

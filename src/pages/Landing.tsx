@@ -3,7 +3,6 @@ import HeroSection from "@/components/landing/HeroSection";
 import MarqueeSection from "@/components/landing/MarqueeSection";
 import FeaturesSection from "@/components/landing/FeaturesSection";
 import VibeSection from "@/components/landing/VibeSection";
-import SmartSettlementSection from "@/components/landing/SmartSettlementSection";
 import PricingSection from "@/components/landing/PricingSection";
 import Footer from "@/components/landing/Footer";
 
@@ -15,7 +14,6 @@ const Index = () => {
       <MarqueeSection />
       <FeaturesSection />
       <VibeSection />
-      <SmartSettlementSection />
       <PricingSection />
       <Footer />
     </div>

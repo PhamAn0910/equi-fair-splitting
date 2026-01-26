@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import SmartSettlementSection from "./SmartSettlementSection";
 
 const FeaturesSection = () => {
   return (
@@ -18,7 +19,7 @@ const FeaturesSection = () => {
               Simply snap a photo of any receipt. Our AI reads the messy details so you don't have to type manually.
             </p>
           </div>
-          
+
           <div className="absolute bottom-0 left-0 w-full h-[50%] md:h-[60%] flex items-end justify-center">
             <div className="w-[60%] md:w-[70%] h-[100%] md:h-[120%] bg-muted rotate-[-5deg] translate-y-16 md:translate-y-20 shadow-xl p-4 md:p-6 relative rounded-t-lg transition-transform duration-500 group-hover:translate-y-10 group-hover:rotate-0">
               <div className="w-full h-4 bg-border mb-4 rounded opacity-50" />
@@ -61,7 +62,7 @@ const FeaturesSection = () => {
               Instantly itemized, categorized, and ready to assign. Drag, drop, done.
             </p>
           </div>
-          
+
           <div className="relative md:absolute md:bottom-0 md:right-0 w-full h-[280px] md:h-[70%] mt-auto">
             <div className="relative w-full h-full flex items-start md:items-center justify-center pt-4 md:pt-0">
               {/* Burger card */}
@@ -114,6 +115,10 @@ const FeaturesSection = () => {
             </div>
           </div>
         </motion.div>
+      </div>
+
+      <div className="mt-24">
+        <SmartSettlementSection />
       </div>
     </section>
   );
