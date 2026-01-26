@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useSyncManager } from "@/hooks/useSyncManager";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { ResponsiveLayout } from "./components/layout/ResponsiveLayout";
+import Landing from "./pages/Landing";
 import Index from "./pages/Index";
 import ScanPaint from "./pages/ScanPaint";
 import GroupDetail from "./pages/GroupDetail";
@@ -48,12 +49,13 @@ const App = () => {
           <LemonSqueezyInit />
           <Routes>
             {/* Public Routes */}
+            <Route path="/" element={<Landing />} />
             <Route path="/scan" element={<ScanPaint />} />
 
             {/* Protected Routes - Require Authentication */}
             <Route element={<ProtectedRoute />}>
               <Route element={<ResponsiveLayout />}>
-                <Route path="/" element={<Index />} />
+                <Route path="/app" element={<Index />} />
                 <Route path="/group/:groupId" element={<GroupDetail />} />
                 <Route path="/groups" element={<Groups />} />
                 <Route path="/bills" element={<Bills />} />

@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/sidebar';
 
 const navItems = [
-    { icon: Home, label: 'Home', path: '/' },
+    { icon: Home, label: 'Home', path: '/app' },
     { icon: MessageSquare, label: 'Groups', path: '/groups' },
     { icon: Receipt, label: 'Bills', path: '/bills' },
     { icon: RefreshCw, label: 'Settle', path: '/settle' },
@@ -25,7 +25,7 @@ export function AppSidebar() {
     return (
         <Sidebar collapsible="icon" className="border-r border-border">
             <SidebarHeader className="p-4">
-                <Link to="/" className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
+                <Link to="/app" className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
                         <Palette className="w-5 h-5 text-primary-foreground" />
                     </div>
@@ -41,7 +41,7 @@ export function AppSidebar() {
                         <SidebarMenu>
                             {navItems.map(({ icon: Icon, label, path }) => {
                                 const isActive = location.pathname === path ||
-                                    (path !== '/' && location.pathname.startsWith(path));
+                                    (path !== '/app' && location.pathname.startsWith(path));
 
                                 return (
                                     <SidebarMenuItem key={path}>
