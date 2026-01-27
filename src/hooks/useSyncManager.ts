@@ -11,10 +11,10 @@ import { useExpenseStore } from '@/stores/expenseStore';
  * Usage: Call this hook once in your main authenticated layout/page
  */
 export function useSyncManager() {
-  const { getToken, userId, isSignedIn } = useAuth();
+  const { getToken, userId, isSignedIn, isLoaded } = useAuth();
   const hasInitialized = useRef(false);
   const prevUserId = useRef<string | null>(null);
-  
+
   const groupStore = useGroupStore();
   const expenseStore = useExpenseStore();
 
@@ -23,19 +23,20 @@ export function useSyncManager() {
     return getToken({ template: 'supabase' });
   }, [getToken]);
 
+  const currentUserId = userId || null;
+
   useEffect(() => {
     // Reset initialization if user changed (sign out/sign in)
-    if (prevUserId.current !== userId) {
-      if (prevUserId.current !== null) {
-        // User changed, cleanup old session
-        groupStore.cleanup();
-        expenseStore.cleanup();
-        hasInitialized.current = false;
-      }
-      prevUserId.current = userId;
+    // Only cleanup if we actually had a DIFFERENT user before
+    if (prevUserId.current !== null && prevUserId.current !== currentUserId) {
+      // User changed, cleanup old session
+      groupStore.cleanup();
+      expenseStore.cleanup();
+      hasInitialized.current = false;
     }
+    prevUserId.current = currentUserId;
 
-    if (!isSignedIn || !userId || hasInitialized.current) return;
+    if (!isSignedIn || !currentUserId || hasInitialized.current) return;
 
     const initializeStores = async () => {
       try {
@@ -68,6 +69,9 @@ export function useSyncManager() {
 
     // Cleanup on unmount
     return () => {
+      // Don't cleanup if we're just transitioning from loading state
+      if (!isLoaded) return;
+
       // Only cleanup if actually signing out (not just unmounting)
       if (!isSignedIn) {
         groupStore.cleanup();
@@ -76,7 +80,7 @@ export function useSyncManager() {
         prevUserId.current = null;
       }
     };
-  }, [isSignedIn, userId, getSupabaseToken]);
+  }, [isSignedIn, currentUserId, getSupabaseToken, isLoaded]);
 
   // Re-fetch expenses when groups change
   useEffect(() => {
@@ -90,6 +94,6 @@ export function useSyncManager() {
     isLoading: groupStore.isLoading || expenseStore.isLoading,
     error: groupStore.error || expenseStore.error,
     isAuthenticated: isSignedIn,
-    userId,
+    userId: currentUserId,
   };
 }

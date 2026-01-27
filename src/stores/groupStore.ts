@@ -14,6 +14,7 @@ export interface GroupMember {
   isAdmin: boolean;
 }
 
+
 export interface Group {
   id: string;
   name: string;
@@ -460,7 +461,7 @@ export const useGroupStore = create<GroupState>()(
     }),
     {
       name: 'group-storage',
-      partialize: (state) => ({ activeGroupId: state.activeGroupId }),
+      partialize: (state) => ({ activeGroupId: state.activeGroupId, groups: state.groups }),
     }
   )
 );
