@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import type { ExpenseItem, ExpenseFees } from '@/stores/paintStore';
 
+// Set this to true to force Qwen fallback for testing purposes
+const TEST_FORCE_FALLBACK = true;
+
 export interface ParsedReceiptData {
   items: ExpenseItem[];
   fees: ExpenseFees;
@@ -190,6 +193,9 @@ export function useReceiptOCR(): UseReceiptOCRResult {
 
       // Try Gemini first
       try {
+        if (TEST_FORCE_FALLBACK) {
+          throw new Error('Forced fallback for testing');
+        }
         result = await callGemini(base64Data, mimeType);
       } catch (geminiError) {
         console.warn('Gemini failed, falling back to Qwen:', geminiError);
