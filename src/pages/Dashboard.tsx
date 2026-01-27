@@ -161,8 +161,8 @@ export default function Dashboard() {
               <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
                 <Plus className="w-6 h-6 text-muted-foreground" />
               </div>
-              <p className="font-medium text-foreground">Create your first trip</p>
-              <p className="text-sm text-muted-foreground">Add members and start splitting</p>
+              <p className="font-medium text-foreground">{hasGroups ? 'Create new trip' : 'Create your first trip'}</p>
+              <p className="text-sm text-muted-foreground">{hasGroups ? 'Start a fresh group' : 'Add members and start splitting'}</p>
             </div>
           )}
         </section>

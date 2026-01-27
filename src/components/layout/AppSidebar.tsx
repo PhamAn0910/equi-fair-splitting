@@ -1,10 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Home, MessageSquare, Receipt, RefreshCw, User, Palette } from 'lucide-react';
+import { useGroupStore } from '@/stores/groupStore';
 import {
     Sidebar,
     SidebarContent,
     SidebarGroup,
     SidebarGroupContent,
+    SidebarGroupLabel,
     SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
@@ -21,6 +23,8 @@ const navItems = [
 
 export function AppSidebar() {
     const location = useLocation();
+    const { getActiveGroup } = useGroupStore();
+    const activeGroup = getActiveGroup();
 
     return (
         <Sidebar collapsible="icon" className="border-r border-border">
@@ -36,7 +40,34 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
+                {activeGroup && (
+                    <SidebarGroup>
+                        <SidebarGroupLabel>Active Trip</SidebarGroupLabel>
+                        <SidebarGroupContent>
+                            <SidebarMenu>
+                                <SidebarMenuItem>
+                                    <SidebarMenuButton asChild tooltip={activeGroup.name} className="h-auto py-3">
+                                        <Link to={`/group/${activeGroup.id}`} className="flex items-center gap-3">
+                                            <div
+                                                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm shrink-0"
+                                                style={{ backgroundColor: activeGroup.members.find(m => m.isAdmin)?.colorHex || '#6B7B5F' }}
+                                            >
+                                                {activeGroup.name.substring(0, 2).toUpperCase()}
+                                            </div>
+                                            <div className="flex flex-col gap-0.5 overflow-hidden text-left">
+                                                <span className="font-medium truncate leading-none">{activeGroup.name}</span>
+                                                <span className="text-xs text-muted-foreground truncate">{activeGroup.members.length} members</span>
+                                            </div>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            </SidebarMenu>
+                        </SidebarGroupContent>
+                    </SidebarGroup>
+                )}
+
                 <SidebarGroup>
+                    <SidebarGroupLabel>Menu</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
                             {navItems.map(({ icon: Icon, label, path }) => {
