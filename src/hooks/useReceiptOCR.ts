@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import type { ExpenseItem, ExpenseFees } from '@/stores/paintStore';
 
 // Set this to true to force Qwen fallback for testing purposes
-const TEST_FORCE_FALLBACK = true;
+const TEST_FORCE_FALLBACK = false;
 
 export interface ParsedReceiptData {
   items: ExpenseItem[];
