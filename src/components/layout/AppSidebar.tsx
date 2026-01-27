@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, MessageSquare, Receipt, RefreshCw, User, Palette } from 'lucide-react';
+import { Home, MessageSquare, Receipt, RefreshCw, User } from 'lucide-react';
+import equiLogo from "@/assets/equi-logo.png";
 import { useGroupStore } from '@/stores/groupStore';
 import {
     Sidebar,
@@ -29,12 +30,10 @@ export function AppSidebar() {
     return (
         <Sidebar collapsible="icon" className="border-r border-border">
             <SidebarHeader className="p-4">
-                <Link to="/app" className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                        <Palette className="w-5 h-5 text-primary-foreground" />
-                    </div>
+                <Link to="/" className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
+                    <img src={equiLogo} alt="Equi" className="w-8 h-8 object-contain" />
                     <span className="font-bold text-lg text-foreground group-data-[collapsible=icon]:hidden">
-                        BillPaint
+                        Equi
                     </span>
                 </Link>
             </SidebarHeader>
