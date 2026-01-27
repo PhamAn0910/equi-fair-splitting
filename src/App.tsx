@@ -53,8 +53,8 @@ const App = () => {
             <Route path="/scan" element={<ScanPaint />} />
 
             {/* Protected Routes - Require Authentication */}
-            <Route element={<ProtectedRoute />}>
-              <Route element={<ResponsiveLayout />}>
+            <Route element={<ResponsiveLayout />}>
+              <Route element={<ProtectedRoute />}>
                 <Route path="/app" element={<Index />} />
                 <Route path="/group/:groupId" element={<GroupDetail />} />
                 <Route path="/groups" element={<Groups />} />
