@@ -37,10 +37,7 @@ const PricingSection = () => {
               <Check className="w-5 h-5 text-secondary" />
               Standard Bill Splitting
             </li>
-            <li className="flex items-center gap-3">
-              <Check className="w-5 h-5 text-secondary" />
-              Basic Export
-            </li>
+
           </ul>
           <Button variant="outline" className="w-full py-6 rounded-xl font-bold">
             Get Started
@@ -60,7 +57,7 @@ const PricingSection = () => {
           </div>
           <h3 className="text-2xl font-display font-bold mb-2">Equi Pro</h3>
           <div className="text-4xl font-bold mb-6">
-            $4.99<span className="text-lg text-muted font-normal">/mo</span>
+            $2.99<span className="text-lg text-muted font-normal">/mo</span>
           </div>
           <ul className="space-y-4 mb-8 text-muted">
             <li className="flex items-center gap-3">

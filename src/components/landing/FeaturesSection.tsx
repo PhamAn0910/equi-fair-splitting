@@ -28,15 +28,15 @@ const FeaturesSection = () => {
               <div className="w-[90%] h-3 bg-border mb-8 rounded opacity-30" />
               <div className="space-y-3 font-mono text-xs text-muted-foreground opacity-60">
                 <div className="flex justify-between">
-                  <span>ITEM 001</span>
+                  <span>TRUFFLE FRIES</span>
                   <span>$12.99</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>ITEM 002</span>
+                  <span>WAGYU SLIDERS</span>
                   <span>$24.50</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>ITEM 003</span>
+                  <span>SPARKLING H2O</span>
                   <span>$8.00</span>
                 </div>
                 <div className="flex justify-between">
@@ -59,7 +59,7 @@ const FeaturesSection = () => {
           <div className="relative z-10 mb-4">
             <h3 className="text-3xl md:text-4xl font-display font-semibold mb-4">Get the clarity.</h3>
             <p className="text-base md:text-lg text-secondary-foreground/80">
-              Instantly itemized, categorized, and ready to assign. Drag, drop, done.
+              Instantly itemized, categorized, and ready to assign. Tap to split.
             </p>
           </div>
 

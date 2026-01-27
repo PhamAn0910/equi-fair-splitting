@@ -91,7 +91,7 @@ const HeroSection = () => {
               className="mix-blend-multiply dark:mix-blend-screen opacity-60"
               d="M20,100 Q60,60 100,100 T180,100"
               fill="none"
-              stroke="hsl(var(--accent))"
+              stroke="hsl(var(--primary))"
               strokeLinecap="round"
               strokeWidth="12"
             />
@@ -99,7 +99,7 @@ const HeroSection = () => {
               className="mix-blend-multiply dark:mix-blend-screen opacity-60"
               d="M30,120 Q70,80 110,120 T190,120"
               fill="none"
-              stroke="hsl(var(--secondary))"
+              stroke="hsl(var(--accent))"
               strokeLinecap="round"
               strokeWidth="12"
             />
