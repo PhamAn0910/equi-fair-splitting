@@ -9,9 +9,9 @@ const Navbar = () => {
       transition={{ duration: 0.5 }}
       className="fixed top-0 left-0 right-0 z-50 p-4 md:p-6 flex justify-center"
     >
-      <div className="bg-card/70 backdrop-blur-md border border-border p-2 pl-4 pr-2 rounded-full flex items-center shadow-sm">
-        <a href="#" className="mr-6 md:mr-8">
-          <img src={equiLogo} alt="Equi" className="h-8 md:h-10 w-auto" />
+      <div className="bg-card/70 backdrop-blur-md border border-border p-2 pl-6 md:pl-8 pr-2 rounded-full flex items-center shadow-sm">
+        <a href="#" className="mr-4 md:mr-6">
+          <img src={equiLogo} alt="Equi" className="h-6 md:h-7 w-auto" />
         </a>
         <div className="hidden md:flex items-center gap-1">
           <a

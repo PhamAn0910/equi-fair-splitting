@@ -30,11 +30,8 @@ export function AppSidebar() {
     return (
         <Sidebar collapsible="icon" className="border-r border-border">
             <SidebarHeader className="p-4">
-                <Link to="/" className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
-                    <img src={equiLogo} alt="Equi" className="w-8 h-8 object-contain" />
-                    <span className="font-bold text-lg text-foreground group-data-[collapsible=icon]:hidden">
-                        Equi
-                    </span>
+                <Link to="/" className="flex items-center justify-start px-2 py-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0">
+                    <img src={equiLogo} alt="Equi" className="w-20 h-auto object-contain group-data-[collapsible=icon]:w-8" />
                 </Link>
             </SidebarHeader>
 
