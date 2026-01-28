@@ -66,15 +66,11 @@ const PricingSection = () => {
             </li>
             <li className="flex items-center gap-3">
               <Check className="w-5 h-5 text-primary" />
-              AI Receipt Scanning
+              50 Daily AI Scans
             </li>
             <li className="flex items-center gap-3">
               <Check className="w-5 h-5 text-primary" />
-              Recurring Bills
-            </li>
-            <li className="flex items-center gap-3">
-              <Check className="w-5 h-5 text-primary" />
-              Custom Categories
+              Early Access to New Features
             </li>
           </ul>
           <Button className="w-full py-6 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 shadow-lg shadow-primary/20">
@@ -82,7 +78,7 @@ const PricingSection = () => {
           </Button>
         </motion.div>
       </div>
-    </section>
+    </section >
   );
 };
 
