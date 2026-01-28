@@ -188,7 +188,7 @@ const FeaturesSection = () => {
               </h2>
 
               <p className="text-lg md:text-xl font-semibold mb-6 opacity-90 text-foreground">
-                One person paints, everyone benefits.
+                One person manages, everyone stays sorted.
               </p>
 
               <p className="text-base text-muted-foreground leading-relaxed max-w-lg mx-auto lg:mx-0">
