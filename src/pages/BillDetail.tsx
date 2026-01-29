@@ -248,14 +248,14 @@ export default function BillDetail() {
           </section>
         )}
 
-        {/* Settle Up Button */}
-        <Button
+        {/* Settle Up Button - removed for Single-User mode */}
+        {/* <Button
           onClick={() => navigate('/settle')}
           className="w-full h-12 rounded-xl"
         >
           <span className="mr-2">✓</span>
           Settle Up
-        </Button>
+        </Button> */}
       </main>
 
       {/* Delete Confirmation Dialog */}

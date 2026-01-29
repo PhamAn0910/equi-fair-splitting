@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, MoreVertical, ChevronDown, ChevronRight } from 'lucide-react';
 import { useGroupStore } from '@/stores/groupStore';
@@ -72,7 +71,7 @@ export default function Settlement() {
 
   // Use active group or first group
   const currentGroup = groups.find(g => g.id === activeGroupId) || groups[0];
-  const [settledIds, setSettledIds] = useState<Set<string>>(new Set());
+
 
   if (!currentGroup) {
     return (
@@ -131,7 +130,7 @@ export default function Settlement() {
       );
 
       const settlementId = `settlement-${index}`;
-      const isSettled = settledIds.has(settlementId);
+
 
       cards.push({
         id: settlementId,
@@ -143,7 +142,7 @@ export default function Settlement() {
         toMemberColor: toMember.colorHex,
         amount: s.amount,
         description: relevantExpense?.description || 'Group expenses',
-        status: isSettled ? 'settled' : 'pending',
+        status: 'pending',
         isYouOwing: admin ? s.from === admin.id : false,
         isOwedToYou: admin ? s.to === admin.id : false,
       });
@@ -156,9 +155,7 @@ export default function Settlement() {
   const pendingCards = settlementCards.filter(c => c.status === 'pending');
   const settledCards = settlementCards.filter(c => c.status === 'settled');
 
-  const handleMarkAsPaid = (settlementId: string) => {
-    setSettledIds(prev => new Set(prev).add(settlementId));
-  };
+
 
   const currencySymbol = currentGroup.currency === 'EUR' ? '€' :
     currentGroup.currency === 'USD' ? '$' :
@@ -242,7 +239,6 @@ export default function Settlement() {
                   key={settlement.id}
                   settlement={settlement}
                   currency={currencySymbol}
-                  onMarkAsPaid={handleMarkAsPaid}
                 />
               ))}
             </div>

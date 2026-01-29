@@ -1,6 +1,5 @@
-import { ArrowRight, Check } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { MemberAvatar } from './MemberAvatar';
-import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
 
 export interface Settlement {
@@ -25,22 +24,22 @@ interface SettlementCardProps {
   onClick?: () => void;
 }
 
-export function SettlementCard({ 
-  settlement, 
-  currency, 
+export function SettlementCard({
+  settlement,
+  currency,
   onMarkAsPaid,
-  onClick 
+  onClick
 }: SettlementCardProps) {
-  const { 
-    fromMemberName, 
-    fromMemberColor, 
-    toMemberName, 
-    toMemberColor, 
-    amount, 
-    description, 
+  const {
+    fromMemberName,
+    fromMemberColor,
+    toMemberName,
+    toMemberColor,
+    amount,
+    description,
     status,
     isYouOwing,
-    isOwedToYou 
+    isOwedToYou
   } = settlement;
 
   const isSettled = status === 'settled';
@@ -56,7 +55,7 @@ export function SettlementCard({
   }
 
   return (
-    <div 
+    <div
       className={cn(
         'bg-card rounded-xl p-4 transition-all',
         onClick && 'cursor-pointer hover:bg-card/80',
@@ -88,13 +87,13 @@ export function SettlementCard({
 
         {/* Amount and status */}
         <div className="flex flex-col items-end">
-          <p 
+          <p
             className="font-semibold"
             style={{
-              color: isSettled 
+              color: isSettled
                 ? undefined
-                : isYouOwing 
-                  ? 'rgb(231, 110, 80)' 
+                : isYouOwing
+                  ? 'rgb(231, 110, 80)'
                   : '#3b761f'
             }}
           >
@@ -108,8 +107,8 @@ export function SettlementCard({
         </div>
       </div>
 
-      {/* Mark as Paid button - only show for "you owe" and pending */}
-      {isYouOwing && !isSettled && onMarkAsPaid && (
+      {/* Mark as Paid button - removed for Single-User mode */}
+      {/* {isYouOwing && !isSettled && onMarkAsPaid && (
         <Button
           onClick={(e) => {
             e.stopPropagation();
@@ -120,7 +119,7 @@ export function SettlementCard({
           Mark as Paid
           <Check className="w-4 h-4" />
         </Button>
-      )}
+      )} */}
     </div>
   );
 }
