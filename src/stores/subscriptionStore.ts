@@ -62,10 +62,9 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
             .from('user_subscriptions')
             .select('*')
             .eq('user_id', userId)
-            .single();
+            .maybeSingle();
 
-          if (error && error.code !== 'PGRST116') {
-            // PGRST116 = no rows found (new user)
+          if (error) {
             console.error('Error fetching subscription:', error);
           }
 
@@ -138,9 +137,9 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
             .select('scan_count')
             .eq('user_id', userId)
             .eq('scan_date', today)
-            .single();
+            .maybeSingle();
 
-          if (error && error.code !== 'PGRST116') {
+          if (error) {
             console.error('Error fetching scan count:', error);
           }
 

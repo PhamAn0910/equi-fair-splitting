@@ -18,6 +18,7 @@ import BillDetail from "./pages/BillDetail";
 import Analytics from "./pages/Analytics";
 import Account from "./pages/Account";
 import Settings from "./pages/Settings";
+import Feedback from "./pages/Feedback";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -64,6 +65,7 @@ const App = () => {
                 <Route path="/bill/:billId" element={<BillDetail />} />
                 <Route path="/account" element={<Account />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/feedback" element={<Feedback />} />
                 <Route path="/analytics" element={<Analytics />} />
               </Route>
             </Route>

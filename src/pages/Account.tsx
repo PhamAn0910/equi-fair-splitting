@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { MemberAvatar } from '@/components/MemberAvatar';
 import { UpgradeDialog } from '@/components/UpgradeDialog';
 import { useSubscriptionStore } from '@/stores/subscriptionStore';
-import { Settings, Bell, CreditCard, HelpCircle, LogOut, ChevronRight, Sparkles } from 'lucide-react';
+import { Settings, CreditCard, LogOut, ChevronRight, Sparkles, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUser, useClerk, useAuth } from '@clerk/clerk-react';
 
@@ -116,27 +116,15 @@ export default function Account() {
         </button>
 
         <button
-          className="w-full flex items-center gap-4 p-4 bg-card rounded-xl hover:bg-muted transition-colors opacity-50"
+          onClick={() => navigate('/feedback')}
+          className="w-full flex items-center gap-4 p-4 bg-card rounded-xl hover:bg-muted transition-colors"
         >
           <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-            <Bell className="w-5 h-5 text-foreground" />
+            <MessageSquare className="w-5 h-5 text-foreground" />
           </div>
           <div className="flex-1 text-left">
-            <p className="font-medium text-foreground">Notifications</p>
-            <p className="text-sm text-muted-foreground">Coming soon</p>
-          </div>
-          <ChevronRight className="w-5 h-5 text-muted-foreground" />
-        </button>
-
-        <button
-          className="w-full flex items-center gap-4 p-4 bg-card rounded-xl hover:bg-muted transition-colors opacity-50"
-        >
-          <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-            <HelpCircle className="w-5 h-5 text-foreground" />
-          </div>
-          <div className="flex-1 text-left">
-            <p className="font-medium text-foreground">Help & Support</p>
-            <p className="text-sm text-muted-foreground">Coming soon</p>
+            <p className="font-medium text-foreground">Feedback</p>
+            <p className="text-sm text-muted-foreground">Help us improve</p>
           </div>
           <ChevronRight className="w-5 h-5 text-muted-foreground" />
         </button>
