@@ -29,7 +29,7 @@ const categoryIcons: Record<string, React.ReactNode> = {
 };
 
 export default function Bills() {
-  const { groups, getActiveGroup } = useGroupStore();
+  const { groups, getActiveGroup, setActiveGroup } = useGroupStore();
   const { expenses } = useExpenseStore();
   const navigate = useNavigate();
 
@@ -104,7 +104,15 @@ export default function Bills() {
 
       {/* Group Filter */}
       <div className="px-4 pb-4">
-        <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
+        <Select
+          value={selectedGroupId}
+          onValueChange={(value) => {
+            setSelectedGroupId(value);
+            if (value !== 'all') {
+              setActiveGroup(value);
+            }
+          }}
+        >
           <SelectTrigger className="w-full bg-card">
             <SelectValue placeholder="Filter by group" />
           </SelectTrigger>
@@ -126,7 +134,10 @@ export default function Bills() {
           return (
             <div
               key={expense.id}
-              onClick={() => navigate(`/bill/${expense.id}?from=bills`, { state: { from: 'bills' } })}
+              onClick={() => {
+                setActiveGroup(expense.groupId);
+                navigate(`/bill/${expense.id}?from=bills`, { state: { from: 'bills' } });
+              }}
               className="relative flex items-center gap-3 p-4 bg-card rounded-xl cursor-pointer hover:opacity-90 transition-all border border-border/50 overflow-hidden"
             >
               {/* Left color bar */}
@@ -188,12 +199,6 @@ export default function Bills() {
           <div className="p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-foreground">Add Bill</h3>
-              <button
-                onClick={() => setShowAddOptions(false)}
-                className="p-1 rounded-full hover:bg-muted transition-colors"
-              >
-                <X className="w-5 h-5 text-muted-foreground" />
-              </button>
             </div>
 
             <div className="space-y-2">
