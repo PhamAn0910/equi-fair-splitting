@@ -1,10 +1,21 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ArrowLeft, Brain } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { ArrowLeft, User as UserIcon, Globe } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useUserStore } from '@/stores/userStore';
+import { CURRENCIES } from '@/lib/constants';
 
 export default function Settings() {
   const navigate = useNavigate();
+  const { name, setName, defaultCurrency, setDefaultCurrency } = useUserStore();
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -25,39 +36,59 @@ export default function Settings() {
       <main className="px-4 py-6 space-y-6">
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">
-            <Brain className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-semibold text-foreground">AI Configuration</h2>
+            <UserIcon className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold text-foreground">User Profile</h2>
           </div>
 
-          <p className="text-sm text-muted-foreground mb-6">
-            The app automatically uses the best available AI model for receipt scanning.
-          </p>
-
-          <div className="p-4 bg-muted/50 rounded-lg space-y-3">
-            <p className="text-sm font-medium text-foreground">
-              How it works
-            </p>
-            <p className="text-sm text-muted-foreground">
-              1. <strong>Primary:</strong> Gemini 2.5 Flash (Fast & Accurate)
-            </p>
-            <p className="text-sm text-muted-foreground">
-              2. <strong>Fallback:</strong> Qwen 2.5 VL (Reliable Backup)
-            </p>
-            <p className="text-xs text-muted-foreground mt-2 pt-2 border-t border-border">
-              If the primary model is busy or rate-limited, the system will automatically switch to the fallback model.
-            </p>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                Your Name
+              </label>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter your name"
+              />
+              <p className="text-xs text-muted-foreground mt-1.5">
+                This name will be used when you create new groups.
+              </p>
+            </div>
           </div>
         </Card>
 
         <Card className="p-6">
-          <h3 className="font-medium text-foreground mb-3">API Key Configuration</h3>
-          <div className="space-y-4 text-sm text-muted-foreground">
-            <p>
-              To ensure uninterrupted service, please configure both API keys in your environment variables:
-            </p>
-            <div className="space-y-2">
-              <p>• <strong>Gemini (Primary):</strong> Requires VITE_GEMINI_API_KEY from <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Google AI Studio</a></p>
-              <p>• <strong>Qwen (Fallback):</strong> Requires VITE_OPENROUTER_API_KEY from <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">openrouter.ai/keys</a></p>
+          <div className="flex items-center gap-2 mb-4">
+            <Globe className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold text-foreground">Default Currency</h2>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                Currency
+              </label>
+              <Select
+                value={defaultCurrency}
+                onValueChange={(val) => setDefaultCurrency(val)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CURRENCIES.map((currency) => (
+                    <SelectItem key={currency.code} value={currency.code}>
+                      <span className="flex items-center gap-2">
+                        <span className="font-mono w-8">{currency.code}</span>
+                        <span className="text-muted-foreground">{currency.name} ({currency.symbol})</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1.5">
+                This currency will be selected by default when creating new groups.
+              </p>
             </div>
           </div>
         </Card>

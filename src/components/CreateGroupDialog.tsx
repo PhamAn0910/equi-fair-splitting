@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, X, Globe } from 'lucide-react';
 import { useGroupStore } from '@/stores/groupStore';
+import { useUserStore } from '@/stores/userStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -17,7 +18,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { CURRENCIES, CurrencyCode } from '@/lib/constants';
+import { CURRENCIES, CurrencyCode, getInitials } from '@/lib/constants';
 
 interface CreateGroupDialogProps {
     open: boolean;
@@ -27,9 +28,10 @@ interface CreateGroupDialogProps {
 export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps) {
     const navigate = useNavigate();
     const { createGroup, addMember, setActiveGroup } = useGroupStore();
+    const { name: userName, defaultCurrency } = useUserStore();
 
     const [newGroupName, setNewGroupName] = useState('');
-    const [selectedCurrency, setSelectedCurrency] = useState<CurrencyCode>('VND');
+    const [selectedCurrency, setSelectedCurrency] = useState<CurrencyCode>(defaultCurrency as CurrencyCode);
     const [newMemberName, setNewMemberName] = useState('');
     const [tempMembers, setTempMembers] = useState<string[]>([]);
     const [showMemberStep, setShowMemberStep] = useState(false);
@@ -42,7 +44,7 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
             setNewGroupName('');
             setNewMemberName('');
             setTempMembers([]);
-            setSelectedCurrency('VND'); // Reset to default
+            setSelectedCurrency(defaultCurrency as CurrencyCode); // Reset to default
         }, 300);
     };
 
@@ -65,7 +67,7 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
         if (!newGroupName.trim()) return;
 
         // Create new group with currency
-        const group = await createGroup(newGroupName.trim(), selectedCurrency);
+        const group = await createGroup(newGroupName.trim(), selectedCurrency, userName);
         if (!group) return;
 
         // Add all temporary members
@@ -151,9 +153,9 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                                 {/* Show organizer (You) */}
                                 <div className="flex items-center gap-3 bg-muted/50 px-3 py-2 rounded-xl">
                                     <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white bg-orange-500">
-                                        YO
+                                        {getInitials(userName)}
                                     </div>
-                                    <span className="flex-1 font-medium">You</span>
+                                    <span className="flex-1 font-medium">{userName}</span>
                                     <span className="text-xs text-muted-foreground">Organizer</span>
                                 </div>
                                 {/* Show temporary members */}
