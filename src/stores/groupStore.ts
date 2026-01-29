@@ -257,8 +257,8 @@ export const useGroupStore = create<GroupState>()(
           return group;
 
         } catch (err: any) {
-          console.error('Failed to create group:', err);
-          set({ error: err.message });
+          console.error('Failed to create group:', JSON.stringify(err, null, 2));
+          set({ error: err.message || 'Failed to create group' });
           return null;
         }
       },

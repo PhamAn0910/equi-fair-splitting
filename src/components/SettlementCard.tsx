@@ -1,6 +1,7 @@
 import { ArrowRight } from 'lucide-react';
 import { MemberAvatar } from './MemberAvatar';
 import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/constants';
 
 export interface Settlement {
   id: string;
@@ -97,7 +98,7 @@ export function SettlementCard({
                   : '#3b761f'
             }}
           >
-            {currency}{amount.toFixed(2)}
+            {formatCurrency(amount, currency)}
           </p>
           {isSettled ? (
             <span className="text-xs text-muted-foreground">Settled</span>

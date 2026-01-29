@@ -33,12 +33,34 @@ export function getNextColor(usedColors: string[]): MemberColor {
   return available || MEMBER_COLORS[usedColors.length % MEMBER_COLORS.length];
 }
 
-// Currency formatter - no currency symbol for now
-export function formatCurrency(amount: number, _currency = 'EUR'): string {
+// Supported currencies
+export const CURRENCIES = [
+  { code: 'VND', symbol: '₫', name: 'Vietnamese Dong', decimals: 0 },
+  { code: 'USD', symbol: '$', name: 'US Dollar', decimals: 2 },
+  { code: 'EUR', symbol: '€', name: 'Euro', decimals: 2 },
+  { code: 'JPY', symbol: '¥', name: 'Japanese Yen', decimals: 0 },
+  { code: 'KRW', symbol: '₩', name: 'South Korean Won', decimals: 0 },
+  { code: 'GBP', symbol: '£', name: 'British Pound', decimals: 2 },
+  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar', decimals: 2 },
+  { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar', decimals: 2 },
+  { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar', decimals: 2 },
+] as const;
+
+export type CurrencyCode = typeof CURRENCIES[number]['code'];
+
+// Currency formatter - plain number with correct decimals
+export function formatCurrency(amount: number, currencyCode: string = 'EUR'): string {
+  const currency = CURRENCIES.find(c => c.code === currencyCode) || CURRENCIES[0];
+
   return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: currency.decimals,
+    maximumFractionDigits: currency.decimals,
   }).format(amount);
+}
+
+// Get currency symbol
+export function getCurrencySymbol(currencyCode: string): string {
+  return CURRENCIES.find(c => c.code === currencyCode)?.symbol || '';
 }
 
 // Generate initials from name

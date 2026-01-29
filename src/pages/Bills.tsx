@@ -62,9 +62,9 @@ export default function Bills() {
   // Get group info for an expense
   const getGroupInfo = (expense: typeof expenses[0]) => {
     const group = groups.find(g => g.id === expense.groupId);
-    if (!group) return { name: 'Unknown', bgHex: 'transparent' };
+    if (!group) return { name: 'Unknown', bgHex: 'transparent', hex: '#ccc', currency: 'EUR' };
     const color = getGroupColor(group.colorIndex ?? 0);
-    return { name: group.name, bgHex: color.bgHex, hex: color.hex };
+    return { name: group.name, bgHex: color.bgHex, hex: color.hex, currency: group.currency };
   };
 
   // Filter and sort expenses
@@ -168,7 +168,7 @@ export default function Bills() {
 
               {/* Amount */}
               <p className="font-semibold text-foreground">
-                {formatCurrency(expense.totalAmount)}
+                {formatCurrency(expense.totalAmount, groupInfo.currency)}
               </p>
             </div>
           );

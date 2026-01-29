@@ -24,7 +24,7 @@ export function BalanceCard({
   className,
 }: BalanceCardProps) {
   const isPositive = yourBalance >= 0;
-  
+
   return (
     <div
       onClick={onClick}
@@ -37,13 +37,13 @@ export function BalanceCard({
       {/* Background decoration */}
       <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/10" />
       <div className="absolute -right-4 -bottom-4 w-24 h-24 rounded-full bg-white/5" />
-      
+
       {/* Group badge */}
       <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-primary-foreground mb-3">
         <span className="w-2 h-2 rounded-full bg-accent" />
         {groupName}
       </div>
-      
+
       {/* Balance */}
       <div className="relative z-10">
         <p className="text-primary-foreground/70 text-sm mb-1">YOUR BALANCE</p>
@@ -51,7 +51,7 @@ export function BalanceCard({
           <span className="text-3xl font-bold text-primary-foreground">
             {formatCurrency(Math.abs(yourBalance), currency)}
           </span>
-          <span 
+          <span
             className="text-sm font-medium"
             style={{ color: isPositive ? 'hsl(82, 46%, 69%)' : 'rgb(255, 149, 122)' }}
           >
@@ -59,7 +59,7 @@ export function BalanceCard({
           </span>
         </div>
       </div>
-      
+
       {/* Bottom row */}
       <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/20">
         {/* Member avatars */}
@@ -81,16 +81,17 @@ export function BalanceCard({
             )}
           </div>
         </div>
-        
+
+        {/* Total spend */}
         {/* Total spend */}
         <div className="text-right">
-          <p className="text-primary-foreground/70 text-xs">TOTAL SPEND</p>
+          <p className="text-primary-foreground/70 text-xs">TOTAL SPEND ({currency})</p>
           <p className="text-primary-foreground font-semibold">
             {formatCurrency(totalSpend, currency)}
           </p>
         </div>
       </div>
-      
+
       {/* Chevron indicator */}
       <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary-foreground/50" />
     </div>

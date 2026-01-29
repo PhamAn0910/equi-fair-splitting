@@ -174,13 +174,13 @@ export default function GroupDetail() {
       <div className="px-4 -mt-12">
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-card rounded-xl p-4 shadow-card">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Spend</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Spend ({group.currency})</p>
             <p className="text-xl font-bold text-foreground">
               {formatCurrency(totalSpend, group.currency)}
             </p>
           </div>
           <div className="bg-card rounded-xl p-4 shadow-card">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Your Balance</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Your Balance ({group.currency})</p>
             <p
               className="text-xl font-bold"
               style={{ color: yourBalance >= 0 ? '#3b761f' : 'rgb(231, 110, 80)' }}

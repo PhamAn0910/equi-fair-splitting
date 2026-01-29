@@ -157,9 +157,7 @@ export default function Settlement() {
 
 
 
-  const currencySymbol = currentGroup.currency === 'EUR' ? '€' :
-    currentGroup.currency === 'USD' ? '$' :
-      currentGroup.currency;
+
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -238,7 +236,7 @@ export default function Settlement() {
                 <SettlementCard
                   key={settlement.id}
                   settlement={settlement}
-                  currency={currencySymbol}
+                  currency={currentGroup.currency}
                 />
               ))}
             </div>
@@ -264,7 +262,7 @@ export default function Settlement() {
                 <SettlementCard
                   key={settlement.id}
                   settlement={settlement}
-                  currency={currencySymbol}
+                  currency={currentGroup.currency}
                 />
               ))}
             </div>

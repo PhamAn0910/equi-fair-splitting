@@ -148,7 +148,7 @@ export default function BillDetail() {
             {categoryIcon}
           </div>
           <p className="text-3xl font-bold text-foreground mb-2">
-            {formatCurrency(expense.totalAmount)}
+            {formatCurrency(expense.totalAmount, group?.currency)}
           </p>
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
             {payer && (
@@ -205,7 +205,7 @@ export default function BillDetail() {
 
                   <div className="text-right">
                     <p className="font-semibold text-foreground">
-                      {formatCurrency(split.calculatedAmount)}
+                      {formatCurrency(split.calculatedAmount, group?.currency)}
                     </p>
                     {!isPayer && (
                       <p className="text-xs text-destructive">Owes</p>
@@ -240,7 +240,7 @@ export default function BillDetail() {
                     )}
                   </div>
                   <p className="font-medium text-foreground">
-                    {formatCurrency(item.price * item.quantity)}
+                    {formatCurrency(item.price * item.quantity, group?.currency)}
                   </p>
                 </div>
               ))}
