@@ -39,10 +39,7 @@ interface SubscriptionStore {
   reset: () => void;
 }
 
-const PLAN_LIMITS = {
-  free: 2, // lifetime scans
-  pro: 50, // per day
-};
+import { PLAN_LIMITS } from '@/lib/constants';
 
 export const useSubscriptionStore = create<SubscriptionStore>()(
   persist(

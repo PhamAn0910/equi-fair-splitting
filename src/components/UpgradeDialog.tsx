@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Check, Zap, Sparkles, X } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { PLAN_LIMITS } from '@/lib/constants';
 
 interface UpgradeDialogProps {
   open: boolean;
@@ -29,7 +30,7 @@ const plans = [
     name: 'Pro',
     price: '$2.99',
     variantId: import.meta.env.VITE_LEMONSQUEEZY_PRO_VARIANT_ID || '',
-    features: ['50 scans/day', '3-day free trial', 'Priority support', 'Expense analytics'],
+    features: [`${PLAN_LIMITS.pro} scans/day`, '3-day free trial', 'Priority support', 'Expense analytics'],
     popular: true,
   },
 ];
@@ -139,7 +140,7 @@ export function UpgradeDialog({
     }
   };
 
-  const maxScans = planType === 'free' ? 2 : 50;
+  const maxScans = planType === 'free' ? PLAN_LIMITS.free : PLAN_LIMITS.pro;
   const scanPeriod = isLifetimeScans ? 'lifetime' : 'today';
 
   // Check if user is in trial period

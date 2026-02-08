@@ -10,7 +10,7 @@ import { ExpenseItemRow } from '@/components/ExpenseItemRow';
 import { ScanConfirmDialog } from '@/components/ScanConfirmDialog';
 import { UpgradeDialog } from '@/components/UpgradeDialog';
 import { Button } from '@/components/ui/button';
-import { formatCurrency } from '@/lib/constants';
+import { formatCurrency, PLAN_LIMITS } from '@/lib/constants';
 import { useReceiptOCR } from '@/hooks/useReceiptOCR';
 import { toast } from 'sonner';
 import { useAuth } from '@clerk/clerk-react';
@@ -332,8 +332,8 @@ export default function ScanPaint() {
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {planType === 'free'
-                            ? `You've used ${lifetimeScans}/2 lifetime scans`
-                            : `You've used ${todayScans}/50 scans today`}
+                            ? `You've used ${lifetimeScans}/${PLAN_LIMITS.free} lifetime scans`
+                            : `You've used ${todayScans}/${PLAN_LIMITS.pro} scans today`}
                         </p>
                         <Button
                           size="sm"

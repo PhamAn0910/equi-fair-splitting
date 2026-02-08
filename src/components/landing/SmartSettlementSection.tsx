@@ -30,7 +30,7 @@ const SmartSettlementSection = () => {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
         viewport={{ once: true }}
-        className="max-w-5xl mx-auto bg-card rounded-[3rem] p-12 shadow-xl border border-border/50 relative"
+        className="max-w-5xl mx-auto bg-card rounded-[3rem] p-12 shadow-xl border border-border/ relative"
       >
         <div className="flex flex-col md:flex-row justify-between items-center gap-12 relative z-10">
           {/* Complex Reality - Left side */}

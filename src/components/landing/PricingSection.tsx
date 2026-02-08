@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PLAN_LIMITS } from "@/lib/constants";
 
 const PricingSection = () => {
   return (
@@ -66,7 +67,7 @@ const PricingSection = () => {
             </li>
             <li className="flex items-center gap-3">
               <Check className="w-5 h-5 text-primary" />
-              50 Daily AI Scans
+              {PLAN_LIMITS.pro} Daily AI Scans
             </li>
             <li className="flex items-center gap-3">
               <Check className="w-5 h-5 text-primary" />

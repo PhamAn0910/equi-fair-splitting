@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { MemberAvatar } from '@/components/MemberAvatar';
 import { UpgradeDialog } from '@/components/UpgradeDialog';
 import { useSubscriptionStore } from '@/stores/subscriptionStore';
+import { PLAN_LIMITS } from '@/lib/constants';
 import { Settings, CreditCard, LogOut, ChevronRight, Sparkles, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUser, useClerk, useAuth } from '@clerk/clerk-react';
@@ -75,8 +76,8 @@ export default function Account() {
               </p>
               <p className="text-sm text-muted-foreground">
                 {planType === 'free'
-                  ? `${Math.min(lifetimeScans, 2)}/2 scans used (lifetime)`
-                  : `${Math.min(todayScans, 50)}/50 scans used today`}
+                  ? `${Math.min(lifetimeScans, PLAN_LIMITS.free)}/${PLAN_LIMITS.free} scans used (lifetime)`
+                  : `${Math.min(todayScans, PLAN_LIMITS.pro)}/${PLAN_LIMITS.pro} scans used today`}
               </p>
             </div>
           </div>

@@ -72,3 +72,9 @@ export function getInitials(name: string): string {
     .toUpperCase()
     .slice(0, 2);
 }
+
+// Plan limits
+export const PLAN_LIMITS = {
+  free: 2, // lifetime scans
+  pro: 20, // per day
+} as const;
