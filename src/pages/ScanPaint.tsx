@@ -236,26 +236,28 @@ export default function ScanPaint() {
       />
 
       {/* Header */}
-      <header className="flex items-center justify-between p-4 border-b border-border safe-top">
-        <button
-          onClick={() => {
-            if (activeGroup) {
-              navigate(`/group/${activeGroup.id}`);
-            } else {
-              navigate('/groups');
-            }
-          }}
-          className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <div className="text-center">
-          <h1 className="font-semibold text-foreground">{activeGroup.name}</h1>
-          <p className="text-xs text-muted-foreground">Scan Receipt</p>
+      <header className="border-b border-border safe-top">
+        <div className="flex items-center justify-between px-4 pt-5 pb-4">
+          <button
+            onClick={() => {
+              if (activeGroup) {
+                navigate(`/group/${activeGroup.id}`);
+              } else {
+                navigate('/groups');
+              }
+            }}
+            className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div className="text-center">
+            <h1 className="font-semibold text-foreground">{activeGroup.name}</h1>
+            <p className="text-xs text-muted-foreground">Scan Receipt</p>
+          </div>
+          <button className="p-2 -mr-2 rounded-lg hover:bg-muted transition-colors">
+            <MoreVertical className="w-5 h-5" />
+          </button>
         </div>
-        <button className="p-2 -mr-2 rounded-lg hover:bg-muted transition-colors">
-          <MoreVertical className="w-5 h-5" />
-        </button>
       </header>
 
       {/* Member Selector - Paint Brush Palette */}

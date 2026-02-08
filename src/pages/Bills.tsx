@@ -97,9 +97,11 @@ export default function Bills() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <header className="px-4 pt-6 pb-4 safe-top">
-        <h1 className="text-2xl font-bold text-foreground">Bills ({filteredExpenses.length})</h1>
-        <p className="text-muted-foreground">All your shared bills</p>
+      <header className="safe-top">
+        <div className="px-4 pt-5 pb-4">
+          <h1 className="text-2xl font-bold text-foreground">Bills ({filteredExpenses.length})</h1>
+          <p className="text-muted-foreground">All your shared bills</p>
+        </div>
       </header>
 
       {/* Group Filter */}

@@ -59,8 +59,8 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <header className="px-4 pt-4 pb-4 safe-top">
-        <div className="flex items-center justify-between">
+      <header className="safe-top">
+        <div className="px-4 pt-5 pb-4 flex items-center justify-between">
           <div>
             <p className="text-muted-foreground text-sm">Welcome back,</p>
             <h1 className="text-2xl font-bold text-foreground">

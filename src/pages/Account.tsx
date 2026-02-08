@@ -39,8 +39,8 @@ export default function Account() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <header className="px-4 pt-6 pb-6 safe-top">
-        <div className="flex items-center gap-4">
+      <header className="safe-top">
+        <div className="px-4 pt-5 pb-6 flex items-center gap-4">
           {userImage ? (
             <img
               src={userImage}

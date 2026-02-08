@@ -19,8 +19,8 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <header className="px-4 pt-6 pb-4 safe-top border-b border-border">
-        <div className="flex items-center gap-3">
+      <header className="safe-top border-b border-border">
+        <div className="px-4 pt-5 pb-4 flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"

@@ -80,8 +80,8 @@ export default function Feedback() {
 
     return (
         <div className="min-h-screen bg-background pb-24">
-            <header className="px-4 pt-6 pb-6 safe-top sticky top-0 bg-background/80 backdrop-blur-lg z-10 border-b border-border/50">
-                <div className="flex items-center gap-4">
+            <header className="safe-top sticky top-0 bg-background/80 backdrop-blur-lg z-10 border-b border-border/50">
+                <div className="px-4 pt-5 pb-6 flex items-center gap-4">
                     <button
                         onClick={() => navigate('/account')}
                         className="p-2 -ml-2 hover:bg-muted rounded-full transition-colors"

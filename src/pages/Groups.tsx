@@ -23,9 +23,11 @@ export default function Groups() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <header className="px-4 pt-6 pb-4 safe-top">
-        <h1 className="text-2xl font-bold text-foreground">Groups</h1>
-        <p className="text-muted-foreground">Your trips and expense groups</p>
+      <header className="safe-top">
+        <div className="px-4 pt-5 pb-4">
+          <h1 className="text-2xl font-bold text-foreground">Groups</h1>
+          <p className="text-muted-foreground">Your trips and expense groups</p>
+        </div>
       </header>
 
       <main className="px-4 space-y-2">
