@@ -175,26 +175,22 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       incrementScan: async (userId, getToken) => {
         try {
           const supabase = await createSupabaseClient(getToken);
-          const today = new Date().toISOString().split('T')[0];
 
-          // Upsert the scan count for today
-          const { error } = await supabase.from('ocr_usage').upsert(
-            {
-              user_id: userId,
-              scan_date: today,
-              scan_count: get().todayScans + 1,
-            },
-            {
-              onConflict: 'user_id,scan_date',
-            }
-          );
+          // Use the atomic SECURITY DEFINER RPC function instead of a manual upsert.
+          // This eliminates the race condition where concurrent requests could both
+          // pass the canScan() check before either increments.
+          const { error } = await supabase.rpc('increment_scan_count', {
+            p_user_id: userId,
+          });
 
           if (error) {
-            console.error('Error incrementing scan:', error);
+            console.error('Error incrementing scan via RPC:', error);
             return false;
           }
 
-          set({ todayScans: get().todayScans + 1 });
+          // Refresh actual counts from the database rather than optimistically
+          // updating local state (the caller in ScanPaint.tsx already refreshes
+          // via getTodayScans/getLifetimeScans after this call).
           return true;
         } catch (error) {
           console.error('Error in incrementScan:', error);
