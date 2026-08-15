@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import equiLogo from "@/assets/equi-logo.png";
 
 const Footer = () => {
@@ -14,9 +15,9 @@ const Footer = () => {
         <div className="flex flex-wrap justify-center gap-12 text-sm font-medium text-muted-foreground">
           <div className="flex flex-col gap-4">
             <span className="text-foreground font-bold">Product</span>
-            <a href="#" className="hover:text-primary transition-colors">
+            <Link to="/app" className="hover:text-primary transition-colors">
               Open App
-            </a>
+            </Link>
             <a href="#features" className="hover:text-primary transition-colors">
               Features
             </a>
