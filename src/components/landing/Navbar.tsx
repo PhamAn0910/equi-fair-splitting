@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import equiLogo from "@/assets/equi-logo.png";
 
 const Navbar = () => {
@@ -33,12 +34,12 @@ const Navbar = () => {
             Pricing
           </a>
         </div>
-        <a
-          href="/app"
+        <Link
+          to="/app"
           className="ml-2 bg-foreground text-background px-6 py-2.5 rounded-full text-sm font-medium hover:scale-105 transition-transform"
         >
           Open App
-        </a>
+        </Link>
       </div>
     </motion.nav>
   );
