@@ -1,0 +1,182 @@
+# Equi — Security Fix Brief
+
+Repo: `github.com/PhamAn0910/equi-fair-splitting`
+Context: 3 verified vulnerabilities found by reading the actual source code (not
+speculation). Each entry below includes exact file locations, why it's a problem,
+the recommended fix, and — critically — what existing behavior could break if the
+fix is applied carelessly. Please read the "Dependencies / Do Not Break" section
+for each item before changing anything, and follow the suggested implementation
+order at the bottom, since two of these fixes are coupled.
+
+---
+
+## VULN 1 — Third-party AI API keys exposed in the client bundle
+
+**Where:** `src/hooks/useReceiptOCR.ts`
+
+**Issue:**
+`callGemini()` and `callQwen()` read `import.meta.env.VITE_GEMINI_API_KEY` and
+`import.meta.env.VITE_OPENROUTER_API_KEY` and call
+`generativelanguage.googleapis.com` / `openrouter.ai` **directly from the browser**.
+Vite inlines any `VITE_`-prefixed env var into the public client bundle at build
+time — both keys are visible in browser DevTools (Network tab request URL/body,
+or by inspecting the built JS). Anyone can extract them and burn quota/cost on
+our account, or use Qwen/Gemini access under our credentials.
+
+**Fix:**
+Move both API calls behind a new Vercel Serverless Function, e.g.
+`api/scan-receipt.ts`, following the same pattern already used correctly in
+`api/lemonsqueezy-webhook.ts` (keys read from `process.env`, never prefixed with
+`VITE_`, never sent to the client). The client should POST the image
+(base64 or multipart) to `/api/scan-receipt` and receive back the same JSON shape
+currently returned by `parseReceipt()`: `{ items, fees, subtotal, usedModel }`.
+Keep the existing Gemini→Qwen fallback logic, just move it server-side unchanged.
+
+**Dependencies / Do Not Break:**
+- Preserve the exact fallback behavior (try Gemini first, catch failure incl. 429,
+  fall back to Qwen, throw combined error only if both fail) — `ScanPaint.tsx`
+  relies on `items.length > 0` to decide whether to show results or a toast warning.
+- Vercel serverless functions have a request body size limit (~4.5MB on
+  Hobby/Pro). Receipt photos from phone cameras can exceed this — may need
+  client-side image compression/resize before upload (check current image size
+  handling, if any, before this change).
+- `TEST_FORCE_FALLBACK` flag currently lives in `useReceiptOCR.ts` for testing —
+  decide whether this test hook moves server-side too or is removed.
+- The already-shipped keys are public now regardless of this code fix — **rotate/
+  regenerate the Gemini API key and OpenRouter API key** in their respective
+  dashboards after deploying, and remove the old `VITE_GEMINI_API_KEY` /
+  `VITE_OPENROUTER_API_KEY` from the Vercel client-side env vars (add new
+  non-`VITE_` server-side equivalents instead).
+
+---
+
+## VULN 2 — Race condition in daily/lifetime scan quota (check-then-act)
+
+**Where:** `src/pages/ScanPaint.tsx` (`canScan()` called before scanning) +
+`src/stores/subscriptionStore.ts` (`incrementScan()`)
+
+**Issue:**
+The flow is: check `canScan()` (reads local Zustand state) → await AI parse →
+`incrementScan()` (reads local `todayScans`, does `todayScans + 1`, upserts).
+Because the check and the increment are separated by an async call, and the
+increment is a **non-atomic read-modify-write on client-held state**, concurrent
+requests (double-tap, two open tabs) can both pass the check before either one
+increments — allowing the user to exceed their quota.
+
+There is already an atomic SQL function for this exact purpose,
+`increment_scan_count(p_user_id text)` in
+`supabase/migrations/.../20260117_*.sql` (uses
+`on conflict (...) do update set scan_count = scan_count + 1`), but it is
+**never called anywhere in the codebase** — the client bypasses it and does a
+manual upsert instead.
+
+**Fix:**
+Replace the manual upsert in `incrementScan()` with
+`supabase.rpc('increment_scan_count', { p_user_id: userId })`. Ideally, go
+further and create a single atomic RPC (e.g. `increment_scan_count_if_allowed`)
+that takes the plan limit as a parameter, checks + increments in one
+transaction, and returns whether it succeeded — this removes the TOCTOU gap
+entirely instead of just making the increment atomic. If that's too large a
+change for now, at minimum switch to the existing `increment_scan_count` RPC.
+
+**Dependencies / Do Not Break:**
+- `canScan()` currently branches on plan type: free plan checks
+  `lifetimeScans < PLAN_LIMITS.free`, pro plan checks
+  `todayScans < PLAN_LIMITS.pro`. Whatever atomic function you introduce must
+  preserve this dual logic (lifetime vs. daily) or the free/pro distinction
+  breaks.
+- `getRemainingScans()` (used in UI to show "X scans left") reads
+  `todayScans`/`lifetimeScans` from local state — after switching to the RPC,
+  make sure the store still calls `getTodayScans`/`getLifetimeScans` afterward
+  (or use the RPC's return value) to keep this UI accurate.
+- If the increment now can fail server-side (quota exceeded) *after* the AI
+  parse already ran, decide the UX: currently `incrementScan` is only called
+  after a successful scan with `items.length > 0`. Make sure a failed increment
+  doesn't silently lose the parsed receipt data — show an upgrade dialog
+  (`UpgradeDialog`, already used elsewhere in `ScanPaint.tsx`) instead.
+- **This fix must ship together with VULN 3's `ocr_usage` RLS change — see
+  implementation order below.** If you tighten RLS before switching to the RPC,
+  scanning breaks immediately (see VULN 3).
+
+---
+
+## VULN 3 — Overly permissive RLS policies on `ocr_usage` and `user_subscriptions`
+
+**Where:** `supabase/migrations/20260117_fix_rls_policies.sql`
+
+**Issue:**
+Current policies grant `FOR ALL` (SELECT + INSERT + UPDATE + DELETE) directly to
+the authenticated client on their own row:
+```sql
+CREATE POLICY "Users can manage own subscription" ON user_subscriptions
+  FOR ALL USING (user_id = auth.jwt()->>'sub') WITH CHECK (user_id = auth.jwt()->>'sub');
+
+CREATE POLICY "Users can manage own usage" ON ocr_usage
+  FOR ALL USING (user_id = auth.jwt()->>'sub') WITH CHECK (user_id = auth.jwt()->>'sub');
+```
+RLS only checks *whose row it is*, not *what values are being written*. Since the
+Supabase anon key is public and any authenticated user has a valid JWT for their
+own `sub`, this means a user can bypass the app UI entirely and call the
+Supabase REST API directly (e.g. from browser devtools) to:
+- Set their own `user_subscriptions.plan_type = 'pro'` and `status = 'active'`,
+  granting themselves Pro access without paying.
+- Set/reset their own `ocr_usage.scan_count` to `0` (or any value) at will,
+  bypassing daily/lifetime scan limits.
+- `DELETE` their own `ocr_usage` rows to wipe usage history.
+
+**Verified impact via codebase search** (`grep -rn "from('user_subscriptions')\|from('ocr_usage')" src/`):
+only `src/stores/subscriptionStore.ts` touches these tables from the client, and:
+- All `user_subscriptions` client calls are **read-only** (`fetchSubscription`
+  only does `.select('*')...maybeSingle()`). Confirmed via
+  `docs/trial-cancellation-flow.md`: subscription state changes are fully
+  webhook-driven (Lemon Squeezy → `api/lemonsqueezy-webhook.ts` → service-role
+  key, which already bypasses RLS correctly). **There is no legitimate client
+  write path to `user_subscriptions` today** — tightening this table to
+  SELECT-only should be safe with no feature impact.
+- `ocr_usage` **is** written directly by the client today (`incrementScan()`
+  calls `.upsert()`). Tightening this table's RLS to SELECT-only **will break
+  scanning immediately** unless VULN 2's fix (calling the `SECURITY DEFINER`
+  RPC function instead of a direct table write) ships in the same change.
+
+**Fix:**
+```sql
+DROP POLICY "Users can manage own subscription" ON user_subscriptions;
+DROP POLICY "Users can manage own usage" ON ocr_usage;
+
+CREATE POLICY "Users can read own subscription" ON user_subscriptions
+  FOR SELECT USING (user_id = auth.jwt()->>'sub');
+
+CREATE POLICY "Users can read own usage" ON ocr_usage
+  FOR SELECT USING (user_id = auth.jwt()->>'sub');
+```
+Confirm `increment_scan_count` and `get_today_scan_count` are (and remain)
+`SECURITY DEFINER` — this lets those specific functions write to `ocr_usage` on
+the user's behalf even though direct client `UPDATE`/`INSERT`/`DELETE` on the
+table is now blocked by RLS.
+
+**Dependencies / Do Not Break:**
+- Do NOT ship this before VULN 2's RPC-based increment is in place and deployed
+  — see order below.
+- Double-check `api/lemonsqueezy-checkout.ts` and `api/lemonsqueezy-portal.ts`
+  (not yet audited in this pass) don't rely on client-side writes to
+  `user_subscriptions` — they run server-side so should be unaffected, but worth
+  a quick check since they weren't part of this review.
+- After deploying, manually test: (a) normal scan flow still works and still
+  respects the daily/lifetime limit, (b) attempting a direct REST call to
+  `PATCH .../user_subscriptions` or `.../ocr_usage` as a logged-in user now
+  returns a permissions error instead of succeeding.
+
+---
+
+## Suggested implementation order (VULN 2 and 3 are coupled)
+
+1. Ship VULN 1 fix independently (no dependency on the others) — rotate keys
+   after deploying.
+2. Ship VULN 2 (switch `incrementScan` to call the `increment_scan_count` RPC)
+   **and** VULN 3's RLS tightening **in the same deploy**. Shipping VULN 3 alone
+   first will break scanning for every user (upsert calls will fail with a
+   permission error). Shipping VULN 2 alone first is safe but leaves the
+   bypass window open until VULN 3 lands.
+3. After both are live, manually verify: scanning still increments correctly,
+   free/pro limits still enforced, and a raw REST call trying to write
+   `plan_type`/`scan_count` directly is rejected.
