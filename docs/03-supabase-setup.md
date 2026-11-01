@@ -122,6 +122,8 @@ returns integer as $$
 $$ language sql security definer;
 ```
 
+> **Scan quota is enforced on the server.** `supabase/migrations/20261101_server_side_scan_quota.sql` adds `consume_scan_quota` and `refund_scan`, which only `service_role` can execute and which `api/scan-receipt.ts` calls. After that code is deployed, `20261102_revoke_client_scan_rpc.sql` revokes client access to `increment_scan_count`. Clients only read their own `ocr_usage` rows to display remaining scans.
+
 ## 3.2 Configure Clerk Integration
 
 This step is CRITICAL for RLS to work.

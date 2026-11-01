@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PLAN_LIMITS } from "@/lib/constants";
 
@@ -40,8 +41,8 @@ const PricingSection = () => {
             </li>
 
           </ul>
-          <Button variant="outline" className="w-full py-6 rounded-xl font-bold">
-            Get Started
+          <Button asChild variant="outline" className="w-full py-6 rounded-xl font-bold">
+            <Link to="/app">Get Started</Link>
           </Button>
         </motion.div>
 
@@ -74,8 +75,8 @@ const PricingSection = () => {
               Early Access to New Features
             </li>
           </ul>
-          <Button className="w-full py-6 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 shadow-lg shadow-primary/20">
-            Go Pro
+          <Button asChild className="w-full py-6 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 shadow-lg shadow-primary/20">
+            <Link to="/account?upgrade=1">Go Pro</Link>
           </Button>
         </motion.div>
       </div>

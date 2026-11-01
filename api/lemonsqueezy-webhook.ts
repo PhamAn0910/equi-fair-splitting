@@ -20,7 +20,7 @@ export const config = {
   },
 };
 
-const webhookSecret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET!;
+const webhookSecret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function buffer(readable: any): Promise<Buffer> {
@@ -33,8 +33,11 @@ async function buffer(readable: any): Promise<Buffer> {
 
 function verifySignature(rawBody: Buffer, signature: string, secret: string): boolean {
   const hmac = crypto.createHmac('sha256', secret);
-  const digest = hmac.update(rawBody).digest('hex');
-  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest));
+  const digest = Buffer.from(hmac.update(rawBody).digest('hex'));
+  const received = Buffer.from(signature);
+  // timingSafeEqual throws on length mismatch, which would crash the function with a 500
+  if (received.length !== digest.length) return false;
+  return crypto.timingSafeEqual(received, digest);
 }
 
 // Helper to determine plan type from variant ID
@@ -59,6 +62,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).send('Method Not Allowed');
   }
 
+  if (!webhookSecret) {
+    console.error('LEMONSQUEEZY_WEBHOOK_SECRET is not configured');
+    return res.status(500).send('Server configuration error');
+  }
+
   const rawBody = await buffer(req);
   const signature = req.headers['x-signature'] as string;
 
@@ -73,7 +81,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(401).send('Invalid signature');
   }
 
-  const payload = JSON.parse(rawBody.toString());
+  let payload;
+  try {
+    payload = JSON.parse(rawBody.toString());
+  } catch {
+    return res.status(400).send('Invalid JSON body');
+  }
   const { meta, data } = payload;
   const eventType = meta.event_name;
 

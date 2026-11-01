@@ -90,6 +90,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 }
 ```
 
+## 4.3b Receipt Scan Function (`api/scan-receipt.ts`)
+
+Receipt scanning calls Gemini (falling back to Qwen via OpenRouter) on the server, so the AI keys never reach the browser. The function also owns the AI scan quota:
+
+1. It verifies the caller's Clerk JWT.
+2. It reads the effective plan from `user_subscriptions`. An expired, cancelled-past-period-end, or trial-ended Pro plan counts as Free.
+3. It calls `consume_scan_quota` with the service-role key. This atomically checks the limit and records the scan (Free: 2 lifetime, Pro: 20 per day; keep in sync with `PLAN_LIMITS` in `src/lib/constants.ts`). Over the limit it returns **403** `{ code: 'SCAN_LIMIT_REACHED' }`, and the client opens the upgrade dialog.
+4. If both models fail or no items are found, it calls `refund_scan`, so only successful scans count.
+
+Required env vars: `GEMINI_API_KEY`, `OPENROUTER_API_KEY`, `SUPABASE_SERVICE_KEY`, `SUPABASE_JWT_SECRET`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`. The SQL functions come from `supabase/migrations/20261101_server_side_scan_quota.sql`. Run that migration before deploying this function, and run `20261102_revoke_client_scan_rpc.sql` after the deploy.
+
 ## 4.4 Install Dependencies for API
 
 Since these run in a Node environment on Vercel:

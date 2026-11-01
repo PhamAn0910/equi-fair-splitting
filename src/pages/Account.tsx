@@ -4,7 +4,7 @@ import { UpgradeDialog } from '@/components/UpgradeDialog';
 import { useSubscriptionStore } from '@/stores/subscriptionStore';
 import { PLAN_LIMITS } from '@/lib/constants';
 import { Settings, CreditCard, LogOut, ChevronRight, Sparkles, MessageSquare } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useUser, useClerk, useAuth } from '@clerk/clerk-react';
 
 export default function Account() {
@@ -14,6 +14,16 @@ export default function Account() {
   const { getToken, userId } = useAuth();
 
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Landing page "Go Pro" links here with ?upgrade=1; open the dialog once, then drop the param
+  useEffect(() => {
+    if (searchParams.get('upgrade') === '1') {
+      setShowUpgradeDialog(true);
+      searchParams.delete('upgrade');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const { subscription, todayScans, lifetimeScans, fetchSubscription, getTodayScans, getLifetimeScans } = useSubscriptionStore();
 

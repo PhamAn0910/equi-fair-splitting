@@ -223,14 +223,19 @@ export const usePaintStore = create<PaintState>((set, get) => ({
   getMemberItemsTotal: (memberId) => {
     const state = get();
     let total = 0;
-    
+
     for (const item of state.items) {
       const assignees = state.assignments[item.id] || [];
       if (assignees.includes(memberId)) {
-        total += (item.price * item.quantity) / assignees.length;
+        // Split per item so the leftover cent lands on one assignee and shares sum to the item price
+        const shares = distributeProportionally(
+          item.price * item.quantity,
+          assignees.map(id => ({ id, weight: 1 }))
+        );
+        total += shares[memberId] || 0;
       }
     }
-    
+
     return Math.round(total * 100) / 100;
   },
 

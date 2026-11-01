@@ -8,6 +8,14 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const supabaseUrl = process.env.VITE_SUPABASE_URL!;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY!;
 const jwtSecret = process.env.SUPABASE_JWT_SECRET!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+
+// Keep in sync with PLAN_LIMITS in src/lib/constants.ts
+// (inlined like the webhook's helpers to avoid module resolution issues in Vercel)
+const PLAN_LIMITS = {
+  free: 2, // lifetime scans
+  pro: 20, // per day
+} as const;
 
 // --- Prompt (same as was in the client) ---
 const PROMPT_TEXT = `You are an expert receipt/invoice parser. Your job is to extract data from this receipt image.
@@ -206,6 +214,30 @@ async function verifyAuthToken(token: string, supabaseClient: any) {
   return null;
 }
 
+// --- Quota helpers ---
+
+// Same downgrade rules as fetchSubscription in src/stores/subscriptionStore.ts
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function getEffectivePlan(admin: any, userId: string): Promise<'free' | 'pro'> {
+  const { data, error } = await admin
+    .from('user_subscriptions')
+    .select('plan_type, status, current_period_end, trial_ends_at')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to read subscription: ${error.message}`);
+  if (!data || data.plan_type !== 'pro') return 'free';
+
+  const now = new Date();
+  const periodEnd = data.current_period_end ? new Date(data.current_period_end) : null;
+  const trialEnd = data.trial_ends_at ? new Date(data.trial_ends_at) : null;
+
+  if (data.status === 'expired') return 'free';
+  if (data.status === 'cancelled' && periodEnd && periodEnd < now) return 'free';
+  if (data.status === 'on_trial' && trialEnd && trialEnd < now) return 'free';
+  return 'pro';
+}
+
 // --- Handler ---
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -254,6 +286,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ? imageBase64
     : `data:${resolvedMimeType};base64,${imageBase64}`;
 
+  // --- Quota: check and record atomically before spending on the AI call ---
+  if (!supabaseServiceKey) {
+    console.error('Missing SUPABASE_SERVICE_KEY');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  try {
+    const plan = await getEffectivePlan(supabaseAdmin, user.id);
+    const { data: allowed, error: quotaError } = await supabaseAdmin.rpc('consume_scan_quota', {
+      p_user_id: user.id,
+      p_limit: PLAN_LIMITS[plan],
+      p_lifetime: plan === 'free',
+    });
+
+    if (quotaError) throw new Error(quotaError.message);
+
+    if (!allowed) {
+      return res.status(403).json({
+        error:
+          plan === 'free'
+            ? 'You have used all your free AI scans. Upgrade to Pro for more.'
+            : 'You have reached your daily AI scan limit. Try again tomorrow.',
+        code: 'SCAN_LIMIT_REACHED',
+      });
+    }
+  } catch (quotaErr) {
+    console.error('scan-receipt quota error:', quotaErr);
+    return res.status(500).json({ error: 'Could not check your scan quota. Please try again.' });
+  }
+
+  // Only successful scans count, so give the scan back when parsing fails
+  const refundScan = async () => {
+    const { error } = await supabaseAdmin.rpc('refund_scan', { p_user_id: user.id });
+    if (error) console.error('Failed to refund scan:', error);
+  };
+
   // --- Gemini → Qwen fallback (same logic as was in useReceiptOCR.ts) ---
   try {
     let result;
@@ -269,11 +341,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         result = await callQwen(base64WithPrefix);
       } catch (qwenError) {
         console.error('Qwen fallback also failed:', qwenError);
+        await refundScan();
         return res.status(502).json({
           error:
             'Failed to parse receipt with both Gemini and Qwen models. Please try again later.',
         });
       }
+    }
+
+    if (result.items.length === 0) {
+      await refundScan();
     }
 
     return res.status(200).json({
@@ -284,6 +361,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   } catch (err) {
     console.error('scan-receipt error:', err);
+    await refundScan();
     const message = err instanceof Error ? err.message : 'Internal server error';
     return res.status(500).json({ error: message });
   }
