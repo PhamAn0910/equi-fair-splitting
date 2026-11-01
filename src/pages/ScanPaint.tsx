@@ -28,7 +28,6 @@ export default function ScanPaint() {
     fetchSubscription,
     getTodayScans,
     getLifetimeScans,
-    incrementScan,
     canScan
   } = useSubscriptionStore();
 
@@ -100,17 +99,17 @@ export default function ScanPaint() {
 
     const receiptData = await parseReceipt(file);
 
-    if (receiptData.items.length > 0) {
+    if (receiptData.limitReached) {
+      setShowUpgradeDialog(true);
+    } else if (receiptData.items.length > 0) {
       setReceiptData(receiptData);
       setHasScanned(true);
+    }
 
-      // Increment scan count after successful scan
-      if (userId && getToken) {
-        await incrementScan(userId, getToken);
-        // Refresh scan counts
-        await getTodayScans(userId, getToken);
-        await getLifetimeScans(userId, getToken);
-      }
+    // The server records successful scans; refresh the counts it now holds
+    if (userId && getToken) {
+      await getTodayScans(userId, getToken);
+      await getLifetimeScans(userId, getToken);
     }
 
     // Reset file input

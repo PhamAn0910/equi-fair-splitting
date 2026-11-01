@@ -30,10 +30,6 @@ interface SubscriptionStore {
     userId: string,
     getToken: (options?: { template?: string }) => Promise<string | null>
   ) => Promise<number>;
-  incrementScan: (
-    userId: string,
-    getToken: (options?: { template?: string }) => Promise<string | null>
-  ) => Promise<boolean>;
   canScan: () => boolean;
   getRemainingScans: () => number;
   reset: () => void;
@@ -169,32 +165,6 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
         } catch (error) {
           console.error('Error in getLifetimeScans:', error);
           return 0;
-        }
-      },
-
-      incrementScan: async (userId, getToken) => {
-        try {
-          const supabase = await createSupabaseClient(getToken);
-
-          // Use the atomic SECURITY DEFINER RPC function instead of a manual upsert.
-          // This eliminates the race condition where concurrent requests could both
-          // pass the canScan() check before either increments.
-          const { error } = await supabase.rpc('increment_scan_count', {
-            p_user_id: userId,
-          });
-
-          if (error) {
-            console.error('Error incrementing scan via RPC:', error);
-            return false;
-          }
-
-          // Refresh actual counts from the database rather than optimistically
-          // updating local state (the caller in ScanPaint.tsx already refreshes
-          // via getTodayScans/getLifetimeScans after this call).
-          return true;
-        } catch (error) {
-          console.error('Error in incrementScan:', error);
-          return false;
         }
       },
 

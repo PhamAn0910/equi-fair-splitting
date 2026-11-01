@@ -8,6 +8,8 @@ export interface ParsedReceiptData {
   fees: ExpenseFees;
   subtotal: number;
   usedModel?: string;
+  /** Server refused the scan because the plan's AI scan quota is used up */
+  limitReached?: boolean;
 }
 
 interface UseReceiptOCRResult {
@@ -60,6 +62,10 @@ export function useReceiptOCR(): UseReceiptOCRResult {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        if (response.status === 403 && errorData?.code === 'SCAN_LIMIT_REACHED') {
+          setError(errorData.error);
+          return { ...emptyResult, limitReached: true };
+        }
         throw new Error(errorData?.error || `Server error: ${response.status}`);
       }
 
